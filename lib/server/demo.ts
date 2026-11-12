@@ -10,7 +10,7 @@ import {
   status,
 } from "./store";
 export async function runDemo(run: Inspection, speed = 1) {
-  const pause = (ms: number) => wait(ms / speed);
+  const pause = async (ms: number) => { await wait(ms / speed); if (run.status !== 'running') throw new Error('Cancelled'); };
   try {
     const result = await executeProvider(demoProvider);
     emit(run, "manager", "task.started", {
@@ -146,6 +146,7 @@ export async function runDemo(run: Inspection, speed = 1) {
     await pause(4200);
     completeInspection(run, "manager", result.summary);
   } catch {
+    if (run.status !== 'running') return;
     run.status = "error";
     status(run, "manager", "Error", "Demo inspection failed");
     emit(run, "manager", "task.failed", { message: "Demo validation failed" });

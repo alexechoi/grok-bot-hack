@@ -10,7 +10,8 @@
     "grok:login": "node scripts/grok-login.mjs",
     "grok:setup": "node scripts/grok-setup.mjs",
     "grok:provision": "node scripts/grok-provision.mjs",
-    "grok:check": "node scripts/grok-check.mjs"
+    "grok:check": "node scripts/grok-check.mjs",
+    "grok:live": "node scripts/grok-live.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",

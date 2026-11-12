@@ -53,6 +53,7 @@ type Registry = {
   listeners: Map<string, Set<(event: AgentEvent) => void>>;
   roundTripVerified: boolean;
   lastStart: number;
+  controls: Map<string,AbortController>;
 };
 const globalRegistry = globalThis as typeof globalThis & {
   __caretakrRegistry?: Registry;
@@ -62,7 +63,9 @@ export const registry = (globalRegistry.__caretakrRegistry ??= {
   listeners: new Map(),
   roundTripVerified: false,
   lastStart: 0,
+  controls: new Map(),
 });
+registry.controls ??= new Map();
 export function createInspection(mode: "demo" | "live") {
   if (
     [...registry.runs.values()].filter((x) => x.status === "running").length >=
@@ -198,12 +201,19 @@ export function createWorkOrder(
     run.workOrders.length >= 20
   )
     throw new Error("Duplicate or excessive work order");
+  const originalPriority = workOrder.priority;
+  const escapeRouteConcern = run.findings.some(finding => workOrder.findingIds.includes(finding.id) && finding.category === 'safety' && /escape|egress|exit route/i.test(`${finding.title} ${finding.description}`));
+  const priorityPolicy = escapeRouteConcern && (originalPriority === 'low' || originalPriority === 'medium') ? 'escape-route-review-minimum-high' : undefined;
+  if (priorityPolicy) {
+    workOrder.priority = 'high';
+    workOrder.action += ' Operational policy: escape-route concerns receive high-priority human review pending clearance measurement.';
+  }
   run.workOrders.push(workOrder);
   emit(
     run,
     role,
     "workorder.created",
-    { workOrder },
+    { workOrder, originalPriority, ...(priorityPolicy ? {priorityPolicy} : {}) },
     run.findings.find((f) => f.id === workOrder.findingIds[0])?.roomId,
   );
   return workOrder;

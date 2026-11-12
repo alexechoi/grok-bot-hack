@@ -21,6 +21,8 @@ const client = new GrokBotClient({
 const roster = await client.listBots();
 if (roster.truncated)
   throw new Error("Bot roster truncated; refusing to create duplicates");
+const capabilities=await client.getRuntimeCapabilities();
+if(process.argv.includes('--create')&&!capabilities.temporalCreationEnabled)throw new Error("Account does not support the verified temporal Bot execution path");
 const roles = [
   ["inspector", "Caretakr · Scout", "Property inspector", "squircle", "blue"],
   ["energy", "Caretakr · Watt", "Energy analyst", "teardrop", "violet"],
@@ -33,21 +35,24 @@ try {
 } catch {}
 for (const [role, name, title, avatarShape, avatarColor] of roles) {
   const configured = process.env[`GROK_BOT_${role.toUpperCase()}_ID`];
-  let bot = roster.bots.find((b) =>
-    configured ? b.id === configured : b.name === name && b.viewerIsOwner,
-  );
+  let bot=roster.bots.find(b=>b.harness==="temporal"&&b.viewerIsOwner&&(configured?b.id===configured:b.name.startsWith(name)))
+    ||roster.bots.find(b=>b.harness==="temporal"&&b.viewerIsOwner&&b.name.startsWith(name));
   if (!bot) {
-    bot = (
-      await client.createBot({
+    if (!process.argv.includes('--create')) throw new Error(`Create ${name} in the native Grok Bot app, then rerun provisioning. This account ignored the SDK temporal harness request; no additional Bots were created.`);
+    const created = await client.createBot({
         name,
         title,
+        harness:"TEMPORAL",
+        createIntent:"FRESH",
+        createCaller:"PRODUCT_CREATE",
         avatarShape,
         avatarColor,
         purpose: `Caretakr synthetic property inspection: ${title}. Use only supplied evidence. Never claim synthetic records are verified.`,
         introductionSuppressed: true,
         kickstartRequested: false,
-      })
-    ).bot;
+      });
+    bot = created.bot;
+    if (bot.harness !== 'temporal') throw new Error(`SDK creation returned ${bot.harness || 'unknown'} rather than TEMPORAL for ${name}; do not retry creation. Create this role in the native app instead.`);
   }
   const key = `GROK_BOT_${role.toUpperCase()}_ID`,
     line = `${key}=${bot.id}`,

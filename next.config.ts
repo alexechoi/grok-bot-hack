@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Credentials are provisioned on the running Node host, never copied into builds.
+  outputFileTracingExcludes: {
+    "/*": ["./.caretakr/**/*", "./.env*", "./**/.env*", "./.git/**/*", "./.concord/**/*"],
+  },
   experimental: {
     agentFeedback: true,
   },

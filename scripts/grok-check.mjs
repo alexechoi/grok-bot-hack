@@ -36,7 +36,8 @@ try {
   if (!process.argv.includes("--round-trip")) process.exit(0);
   const bot =
     roster.bots.find((b) => b.id === process.env.GROK_BOT_INSPECTOR_ID) ||
-    roster.bots.find((b) => b.viewerIsOwner && b.kind !== "room");
+    roster.bots.find((b) => b.viewerIsOwner && b.harness === "temporal" && /^Caretakr.*Scout/.test(b.name)) ||
+    roster.bots.find((b) => b.viewerIsOwner && b.kind !== "room" && b.harness === "temporal");
   if (!bot)
     throw new Error(
       "No owned Bot available; create one in the Grok Bot app first.",
