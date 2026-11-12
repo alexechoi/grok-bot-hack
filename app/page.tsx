@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowUpRight,
@@ -26,22 +27,32 @@ import {
   Settings2,
   ScanLine,
   MoveUpRight,
+  Upload,
 } from "lucide-react";
 import {
   agents,
-  evidence,
   rooms,
   scoringMethod,
   energyMetrics,
+  type Evidence,
 } from "@/lib/scenario";
 import { useInspection, WorkflowEvent, Snapshot } from "@/lib/client-store";
 import { downloadReport } from "@/lib/export-report";
+import { propertyDataset, DATASET_ID } from "@/lib/property-dataset";
+import { PhotoReviewCard, SourceImageDetails } from "@/components/photo-review";
+import {
+  releaseCustomProperty,
+  type CustomProperty,
+} from "@/lib/property-source";
+const PropertyImport = dynamic(() => import("@/components/property-import"), {
+  ssr: false,
+});
 const PropertyScene = dynamic(() => import("@/components/property-scene"), {
   ssr: false,
   loading: () => (
     <div className="scene-loading">
       <div className="loading-orbit" />
-      <span>Building your little world…</span>
+      <span>Loading property…</span>
     </div>
   ),
 });
@@ -62,20 +73,38 @@ const icons = {
 export default function Home() {
   const s = useInspection();
   const stream = useRef<EventSource | null>(null);
+  const dialogRef = useRef<HTMLElement | null>(null);
   const [tab, setTab] = useState<"team" | "findings">("team");
-  const [modal, setModal] = useState<"report" | "integration" | "agent" | null>(
+  const [modal, setModal] = useState<
+    "report" | "integration" | "agent" | "property" | "sources" | null
+  >(null);
+  const [selectedSource, setSelectedSource] = useState<string | null>(null);
+  const [dismissedPhoto, setDismissedPhoto] = useState<string | null>(null);
+  const [customProperty, setCustomProperty] = useState<CustomProperty | null>(
     null,
+  );
+  useEffect(
+    () => () => releaseCustomProperty(customProperty),
+    [customProperty],
   );
   const [starting, setStarting] = useState(false);
   const [speed, setSpeed] = useState<1 | 2 | 4>(1);
   const [cinematic, setCinematic] = useState(true);
-  const [token, setToken] = useState("");
   const [integration, setIntegration] = useState<Integration | null>(null);
   const [notice, setNotice] = useState("");
   const refreshIntegration = () =>
     fetch("/api/integration/status")
       .then((r) => r.json())
-      .then(setIntegration)
+      .then((data) => {
+        setIntegration(data);
+        const url = new URL(window.location.href);
+        if (data.authenticated && url.searchParams.get("mode") === "live") {
+          useInspection.setState({ mode: "live" });
+          url.searchParams.delete("mode");
+          window.history.replaceState(null, "", url.pathname + url.search);
+        }
+        return data;
+      })
       .catch(() => setIntegration(null));
   useEffect(() => {
     void refreshIntegration();
@@ -83,9 +112,12 @@ export default function Home() {
   }, []);
   useEffect(() => {
     if (!s.inspectionId) return;
-    const source = new EventSource(`/api/inspections/${s.inspectionId}/events`);
+    const runId = s.inspectionId;
+    const isCurrent = () => useInspection.getState().inspectionId === runId;
+    const source = new EventSource(`/api/inspections/${runId}/events`);
     stream.current = source;
     source.addEventListener("snapshot", (event) => {
+      if (!isCurrent()) return;
       try {
         useInspection.getState().hydrate(JSON.parse(event.data) as Snapshot);
       } catch {
@@ -93,24 +125,42 @@ export default function Home() {
       }
     });
     source.addEventListener("agent-event", (event) => {
+      if (!isCurrent()) return;
       try {
         const e = JSON.parse(event.data) as WorkflowEvent;
         useInspection.getState().apply(e);
-        if (e.type === "inspection.completed") void refreshIntegration();
+        if (e.type === "inspection.completed") {
+          void refreshIntegration();
+          useInspection.setState((current) => ({
+            cameraMode: "orbit",
+            focusRoom: null,
+            selectedAgent: null,
+            resetKey: current.resetKey + 1,
+          }));
+        }
       } catch {
         setNotice("Could not read agent event.");
       }
     });
-    source.onerror = () =>
-      setNotice("Event connection interrupted. Reconnecting…");
-    source.onopen = () => setNotice("");
+    source.onerror = () => {
+      if (isCurrent()) setNotice("Event connection interrupted. Reconnecting…");
+    };
+    source.onopen = () => {
+      if (isCurrent()) setNotice("");
+    };
     return () => {
       source.close();
       stream.current = null;
     };
   }, [s.inspectionId]);
+
   useEffect(() => {
-    if (!cinematic || s.status !== "running") return;
+    if (
+      !cinematic ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      s.status !== "running"
+    )
+      return;
     const event = s.events.at(-1);
     if (event?.type === "agent.moving" && event.agentId !== "manager")
       useInspection.setState({
@@ -118,6 +168,38 @@ export default function Home() {
         cameraMode: "follow",
       });
   }, [s.events, cinematic, s.status]);
+  useEffect(() => {
+    if (!modal || modal === "property") return;
+    const previous = document.activeElement as HTMLElement | null;
+    dialogRef.current?.querySelector<HTMLElement>("button")?.focus();
+    return () => previous?.focus();
+  }, [modal]);
+  const restoreDemo = () => {
+    s.reset();
+    setCustomProperty(null);
+    useInspection.setState((current) => ({
+      mode: "demo",
+      resetKey: current.resetKey + 1,
+    }));
+  };
+  const applyProperty = (property: CustomProperty) => {
+    stream.current?.close();
+    s.reset();
+    setCustomProperty(property);
+    useInspection.setState((current) => ({ resetKey: current.resetKey + 1 }));
+    setModal(null);
+  };
+  const chooseMode = (mode: "demo" | "live") => {
+    if (mode === s.mode || s.status === "running") return;
+    stream.current?.close();
+    s.reset();
+    useInspection.setState({
+      mode,
+      selectedAgent: null,
+      cameraMode: "orbit",
+      focusRoom: null,
+    });
+  };
   const start = async () => {
     setStarting(true);
     setNotice("");
@@ -134,7 +216,7 @@ export default function Home() {
       const r = await fetch("/api/inspections", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: s.mode, speed }),
+        body: JSON.stringify({ mode: s.mode, speed, datasetId: DATASET_ID }),
       });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || "Could not start inspection");
@@ -149,21 +231,6 @@ export default function Home() {
       if (s.mode === "live") setModal("integration");
     } finally {
       setStarting(false);
-    }
-  };
-  const authenticate = async () => {
-    try {
-      const r = await fetch("/api/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
-      });
-      if (!r.ok) throw new Error("Operator token was not accepted.");
-      setToken("");
-      setNotice("Operator session connected.");
-      await refreshIntegration();
-    } catch (e) {
-      setNotice((e as Error).message);
     }
   };
   const selectAgent = (id: string) => {
@@ -183,6 +250,66 @@ export default function Home() {
       cameraMode: "orbit",
     });
     setModal(null);
+  };
+  const handoffEvent = s.events.findLast(
+    (e) => e.type === "message.sent" && typeof e.payload.toAgentId === "string",
+  );
+  const handoff = handoffEvent
+    ? {
+        id: handoffEvent.id,
+        from: handoffEvent.agentId,
+        to: String(handoffEvent.payload.toAgentId),
+      }
+    : undefined;
+  const referencePhotos: Evidence[] = propertyDataset.photos.map((p) => ({
+    id: p.id,
+    roomId: p.roomId,
+    type: "photo",
+    sourceName: p.title,
+    content: p.description,
+    synthetic: false,
+    scope: "reference-context",
+    capturedAt: p.capturedAt,
+    photoUrl: p.localUrl,
+    sourceUrl: p.sourceUrl,
+    rights: p.rights,
+    attribution: p.credit,
+    sourceDatasetId: DATASET_ID,
+  }));
+  const planEvidence: Evidence = {
+    id: propertyDataset.floorplan.id,
+    roomId: "living",
+    type: "photo",
+    sourceName: "Measured floor plan",
+    content: propertyDataset.dimensions.source,
+    synthetic: false,
+    scope: "reference-context",
+    capturedAt: propertyDataset.floorplan.capturedAt,
+    photoUrl: propertyDataset.floorplan.localUrl,
+    sourceUrl: propertyDataset.floorplan.sourceUrl,
+    rights: propertyDataset.floorplan.rights,
+    attribution: propertyDataset.floorplan.credit,
+    sourceDatasetId: DATASET_ID,
+  };
+  const sourcePhotos = referencePhotos.map(
+    (p) => s.evidence.find((e) => e.id === p.id) || p,
+  );
+  const sourceItems = [planEvidence, ...sourcePhotos];
+  const sourceItem = sourceItems.find((p) => p.id === selectedSource);
+  const currentPhotoEvent = s.events.findLast(
+    (e) => e.type === "photo.review.started",
+  );
+  const currentPhotoId = (
+    currentPhotoEvent?.payload.evidenceIds as string[] | undefined
+  )?.[0];
+  const currentPhoto = sourcePhotos.find((e) => e.id === currentPhotoId);
+  const photoAgent = agents.find((a) => a.id === currentPhotoEvent?.agentId);
+  const currentObservation = s.photoObservations.findLast(
+    (o) => o.evidenceId === currentPhotoId,
+  );
+  const openSource = (id: string | null) => {
+    setSelectedSource(id);
+    setModal("sources");
   };
   const selectedFinding = s.findings.find((f) => f.id === s.selectedFinding);
   const selectedAgent = agents.find((a) => a.id === s.selectedAgent);
@@ -206,6 +333,10 @@ export default function Home() {
     findings: s.findings,
     workOrders: s.workOrders,
     events: s.events,
+    propertyName: s.propertyName || propertyDataset.name,
+    evidence: s.evidence,
+    photoObservations: s.photoObservations,
+    datasetId: s.datasetId || DATASET_ID,
   };
   const activity = s.events
     .filter(
@@ -215,7 +346,10 @@ export default function Home() {
     .reverse();
   return (
     <div className="app-shell">
-      <header className="topbar">
+      <a className="skip-link" href="#property-world">
+        Skip to property
+      </a>
+      <header className="topbar" inert={!!modal}>
         <Link className="brand" href="/" aria-label="Caretakr home">
           <span className="brand-icon">
             <House size={22} />
@@ -231,11 +365,29 @@ export default function Home() {
         </div>
         <div className="top-actions">
           <button
+            className="import-button"
+            onClick={() => setModal("property")}
+            aria-label="Import property"
+            title="Import floor plan and photos"
+            disabled={running}
+          >
+            <Upload size={17} />
+            <span>Import property</span>
+          </button>
+          <button
             className="integration-pill"
-            onClick={() => setModal("integration")}
+            onClick={() =>
+              customProperty ? setModal("property") : setModal("integration")
+            }
           >
             <span className={s.mode === "live" ? "dot live" : "dot"} />
-            {s.mode === "live" ? "LIVE · GROK BOT" : "DEMO WORKSPACE"}
+            {customProperty
+              ? "PREVIEW"
+              : s.mode === "live"
+                ? s.inspectionId
+                  ? "LIVE"
+                  : "LIVE · READY"
+                : "DEMO"}
             <ChevronDown size={12} />
           </button>
           <button
@@ -248,9 +400,12 @@ export default function Home() {
           <div className="user-avatar">AC</div>
         </div>
       </header>
-      <main className="world">
+      <main className="world" id="property-world" inert={!!modal}>
         <PropertyScene
+          propertyId="farnsworth"
           agents={s.agents}
+          handoff={customProperty ? undefined : handoff}
+          customProperty={customProperty}
           findings={s.findings}
           selectedAgent={s.selectedAgent}
           focusRoom={s.focusRoom}
@@ -263,38 +418,49 @@ export default function Home() {
           }
         />
         <div className="property-heading">
-          <div className="eyebrow">
-            <span className="tiny-spark">✳</span> YOUR PROPERTY, IN GOOD HANDS
-          </div>
           <h1>
-            The Willow apartment<span>01</span>
+            {customProperty?.name || s.propertyName || propertyDataset.name}
           </h1>
-          <p>
-            <span className="property-dot" />
-            Illustrative digital twin <i /> 5 rooms <i /> 86 m²
-          </p>
+          {!customProperty && (
+            <button
+              className="property-source-button"
+              onClick={() => openSource(null)}
+            >
+              <FileText size={12} />
+              Plan &amp; photos
+            </button>
+          )}
         </div>
         <div className="scene-badge">
           <span className={running ? "dot live pulse" : "dot"} />
-          {running
-            ? "INSPECTION IN PROGRESS"
-            : complete
-              ? "INSPECTION COMPLETE"
-              : "ALL SYSTEMS READY"}
+          {customProperty
+            ? "UNINSPECTED"
+            : running
+              ? "INSPECTING"
+              : complete
+                ? "COMPLETE"
+                : "READY"}
           <span className="scene-badge-separator" />{" "}
-          {s.mode === "demo" ? "SYNTHETIC DATA" : "LIVE AGENT EXECUTION"}
+          {customProperty
+            ? customProperty.source === "gaussian-splat"
+              ? "UPLOADED SPLAT"
+              : "TRACED PLAN"
+            : s.mode === "demo"
+              ? "SYNTHETIC INCIDENTS"
+              : s.inspectionId
+                ? "LIVE · SYNTHETIC INCIDENTS"
+                : "AWAITING LIVE EXECUTION"}
         </div>
         <aside className="workforce">
           <div className="panel-heading">
-            <span>Your little taskforce</span>
-            <span className="count-badge">04</span>
+            <span>Team</span>
           </div>
           <div className="panel-tabs">
             <button
               className={tab === "team" ? "active" : ""}
               onClick={() => setTab("team")}
             >
-              The team <span>4</span>
+              Agents
             </button>
             <button
               className={tab === "findings" ? "active" : ""}
@@ -333,7 +499,11 @@ export default function Home() {
                       <div>
                         <strong>{a.name}</strong>
                         <span>
-                          {current.state === "Idle" ? "Ready" : current.state}
+                          {customProperty
+                            ? "Preview"
+                            : current.state === "Idle"
+                              ? "Ready"
+                              : current.state}
                         </span>
                       </div>
                       <p>{a.role}</p>
@@ -366,21 +536,18 @@ export default function Home() {
               ) : (
                 <div className="empty-findings">
                   <ScanLine size={25} />
-                  <p>
-                    A fresh pair of eyes.
-                    <br />
-                    Findings will appear here.
-                  </p>
+                  <p>No findings yet.</p>
                 </div>
               )}
             </div>
           )}
           <div className="team-footer">
-            <span className="mini-orbits">✧</span>
             <span>
               {s.mode === "demo"
                 ? "Deterministic example workflow"
-                : "Connected Grok Bot teammates"}
+                : s.inspectionId
+                  ? "Connected Grok Bot teammates"
+                  : "Grok Bot execution selected"}
             </span>
             <button
               aria-label="Integration details"
@@ -487,13 +654,24 @@ export default function Home() {
               </div>
             ))
           ) : (
-            <p className="activity-idle">
-              Four specialists. One shared mission.
-              <br />
-              Your property’s next chapter starts here.
-            </p>
+            <p className="activity-idle">No activity yet.</p>
           )}
         </div>
+        {!customProperty &&
+          running &&
+          currentPhoto &&
+          photoAgent &&
+          currentPhotoEvent?.id !== dismissedPhoto && (
+            <PhotoReviewCard
+              evidence={currentPhoto}
+              agentName={photoAgent.name}
+              agentColor={photoAgent.color}
+              observation={currentObservation}
+              mode={s.mode}
+              onClose={() => setDismissedPhoto(currentPhotoEvent?.id || null)}
+              onOpen={() => openSource(currentPhoto.id)}
+            />
+          )}
         {complete && (
           <button
             className="completion-toast"
@@ -501,8 +679,8 @@ export default function Home() {
           >
             <div className="score-mini">{s.score}</div>
             <div>
-              <span>INSPECTION COMPLETE</span>
-              <strong>A clearer picture. A plan of action.</strong>
+              <span>COMPLETE</span>
+              <strong>Report ready</strong>
               <p>
                 {s.findings.length} findings · {s.workOrders.length} work orders
                 ready
@@ -511,12 +689,15 @@ export default function Home() {
             <ArrowUpRight size={22} />
           </button>
         )}
-        {notice && (
+        {(s.error || notice) && (
           <div className="notice" role="status">
-            {notice}
+            {s.error || notice}
             <button
               aria-label="Dismiss notification"
-              onClick={() => setNotice("")}
+              onClick={() => {
+                setNotice("");
+                useInspection.setState({ error: null });
+              }}
             >
               <X size={14} />
             </button>
@@ -527,7 +708,7 @@ export default function Home() {
           <span>Built with care. Inspected with intelligence.</span>
         </div>
       </main>
-      <footer className="control-deck">
+      <footer className="control-deck" inert={!!modal}>
         <div className="inspection-status">
           <div className={`status-icon ${running ? "spinning" : ""}`}>
             {complete ? (
@@ -540,22 +721,24 @@ export default function Home() {
           </div>
           <div>
             <strong>
-              {complete
-                ? "Every detail, accounted for."
-                : running
-                  ? "A little teamwork in progress."
-                  : "Good care starts with a closer look."}
+              {customProperty
+                ? "Uninspected preview"
+                : complete
+                  ? "Inspection complete"
+                  : running
+                    ? "Inspecting"
+                    : "Ready to inspect"}
             </strong>
             <span>
               {complete
-                ? "Your sourced action plan is ready to explore."
+                ? "Report ready."
                 : running
                   ? `${s.findings.length} findings recorded · ${s.workOrders.length} work orders created`
-                  : "Send your team in. See what they discover."}
+                  : "4 agents ready."}
             </span>
           </div>
         </div>
-        <div className="workflow-progress">
+        <div className="workflow-progress" hidden={!!customProperty}>
           <div className="progress-track">
             <span style={{ width: `${progress}%` }} />
           </div>
@@ -567,7 +750,7 @@ export default function Home() {
           </div>
         </div>
         <div className="start-controls">
-          {!running && (
+          {!running && !customProperty && (
             <button
               className="speed-button"
               title="Demo playback speed"
@@ -579,10 +762,18 @@ export default function Home() {
           )}
           <button
             className="start-button"
-            onClick={complete ? () => setModal("report") : start}
+            onClick={
+              customProperty
+                ? restoreDemo
+                : complete
+                  ? () => setModal("report")
+                  : start
+            }
             disabled={running || starting}
           >
-            {starting ? (
+            {customProperty ? (
+              <House size={17} />
+            ) : starting ? (
               <LoaderCircle className="spinning" size={17} />
             ) : complete ? (
               <FileText size={17} />
@@ -591,13 +782,15 @@ export default function Home() {
             ) : (
               <Play size={15} fill="currentColor" />
             )}
-            {starting
-              ? "Assembling the team…"
-              : complete
-                ? "View inspection report"
-                : running
-                  ? "Inspection underway"
-                  : "Start inspection"}
+            {customProperty
+              ? "Back to demo"
+              : starting
+                ? "Assembling the team…"
+                : complete
+                  ? "View report"
+                  : running
+                    ? "Inspecting…"
+                    : "Inspect property"}
             {!running && !starting && <ArrowRight size={17} />}
           </button>
           {complete && (
@@ -648,7 +841,7 @@ export default function Home() {
           <p>{selectedFinding.recommendedAction}</p>
           <h3>Follow the evidence</h3>
           {selectedFinding.evidenceIds.map((id) => {
-            const e = evidence.find((x) => x.id === id);
+            const e = s.evidence.find((x) => x.id === id);
             return (
               e && (
                 <details className="evidence-item" key={id}>
@@ -665,7 +858,9 @@ export default function Home() {
                     </span>
                     <p>{e.content}</p>
                     <small>
-                      {new Date(e.capturedAt).toLocaleString("en-GB")}
+                      {e.capturedAt
+                        ? new Date(e.capturedAt).toLocaleString("en-GB")
+                        : "Capture date not supplied"}
                     </small>
                   </div>
                 </details>
@@ -677,9 +872,48 @@ export default function Home() {
           </div>
         </div>
       )}
-      {modal && (
+      {modal === "property" && (
+        <PropertyImport
+          onApply={applyProperty}
+          onClose={() => setModal(null)}
+        />
+      )}
+      {modal && modal !== "property" && (
         <div className="modal-backdrop" onClick={() => setModal(null)}>
           <section
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={
+              modal === "report"
+                ? "Inspection report"
+                : modal === "agent"
+                  ? "Agent details"
+                  : modal === "sources"
+                    ? "Property sources"
+                    : "Execution mode"
+            }
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                e.preventDefault();
+                setModal(null);
+              }
+              if (e.key !== "Tab") return;
+              const items = Array.from(
+                e.currentTarget.querySelectorAll<HTMLElement>(
+                  'button:not(:disabled),input:not(:disabled),a[href],summary,[tabindex="0"]',
+                ),
+              ).filter((el) => el.getClientRects().length > 0);
+              const first = items[0],
+                last = items.at(-1);
+              if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault();
+                last?.focus();
+              } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault();
+                first?.focus();
+              }
+            }}
             className={`modal ${modal === "report" ? "report-modal" : ""}`}
             onClick={(e) => e.stopPropagation()}
           >
@@ -690,35 +924,87 @@ export default function Home() {
             >
               <X size={20} />
             </button>
+            {modal === "sources" &&
+              (sourceItem ? (
+                <>
+                  <button
+                    className="source-back"
+                    onClick={() => setSelectedSource(null)}
+                  >
+                    All sources
+                  </button>
+                  <SourceImageDetails
+                    evidence={sourceItem}
+                    observation={s.photoObservations.findLast(
+                      (o) => o.evidenceId === sourceItem.id,
+                    )}
+                  />
+                </>
+              ) : (
+                <>
+                  <h2>Plan &amp; photos</h2>
+                  <p className="source-attribution">
+                    {propertyDataset.name}, {propertyDataset.location}. Archival
+                    sources from one house. The inspection incidents are
+                    synthetic.
+                  </p>
+                  <div className="source-gallery">
+                    {sourceItems.map((item) => (
+                      <button
+                        key={item.id}
+                        className={
+                          item.id === planEvidence.id ? "source-plan" : ""
+                        }
+                        onClick={() => setSelectedSource(item.id)}
+                      >
+                        <Image
+                          unoptimized
+                          src={item.photoUrl!}
+                          alt={item.sourceName}
+                          width={350}
+                          height={220}
+                        />
+                        <span>{item.sourceName}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="source-attribution">{propertyDataset.credit}</p>
+                  <a
+                    className="source-record-link"
+                    href={propertyDataset.sourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Survey record <ArrowUpRight size={14} />
+                  </a>
+                </>
+              ))}
             {modal === "integration" && (
               <>
                 <div className="modal-icon">
                   <Radio size={24} />
                 </div>
-                <div className="eyebrow">HONEST BY DESIGN</div>
-                <h2>Real work. Clear provenance.</h2>
+
+                <h2>Execution mode</h2>
                 <p className="modal-intro">
-                  Choose how your taskforce works. Every input in this scenario
-                  is synthetic; live mode uses real Grok Bot teammates to
-                  analyse it.
+                  Demo replays a synthetic scenario. Live sends that evidence to
+                  your Grok Bot team.
                 </p>
                 <div className="mode-options">
                   <button
                     className={s.mode === "demo" ? "selected" : ""}
                     disabled={running}
-                    onClick={() => useInspection.setState({ mode: "demo" })}
+                    onClick={() => chooseMode("demo")}
                   >
                     <Sparkles size={22} />
                     <strong>Demo</strong>
-                    <p>
-                      A repeatable, deterministic example. No model execution.
-                    </p>
+                    <p>Synthetic findings. No live model.</p>
                     {s.mode === "demo" && <Check size={16} />}
                   </button>
                   <button
                     className={s.mode === "live" ? "selected" : ""}
                     disabled={running}
-                    onClick={() => useInspection.setState({ mode: "live" })}
+                    onClick={() => chooseMode("live")}
                   >
                     <Radio size={22} />
                     <strong>Live Grok Bot</strong>
@@ -753,32 +1039,20 @@ export default function Home() {
                   </div>
                 )}
                 {!integration?.authenticated && (
-                  <form
-                    className="operator-form"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      void authenticate();
-                    }}
-                  >
-                    <label htmlFor="operator-token">Operator access</label>
-                    <div>
-                      <input
-                        id="operator-token"
-                        type="password"
-                        value={token}
-                        onChange={(e) => setToken(e.target.value)}
-                        placeholder="Server operator token"
-                        autoComplete="off"
-                      />
-                      <button type="submit" disabled={!token}>
-                        Connect <ArrowRight size={15} />
-                      </button>
-                    </div>
-                    <small>
-                      Sets an HTTP-only session. Bot credentials never enter the
-                      browser.
-                    </small>
-                  </form>
+                  <div className="live-unlock">
+                    <h3>Unlock Live</h3>
+                    <p>
+                      Open the local workspace link printed when you start the
+                      app.
+                    </p>
+                    <code>npm run unlock:live</code>
+                    <button
+                      type="button"
+                      onClick={() => void refreshIntegration()}
+                    >
+                      Refresh connection
+                    </button>
+                  </div>
                 )}
                 <p className="subtle-text">
                   Grok Bot desktop protocol SDK 0.78.1 · Unofficial integration.
@@ -807,7 +1081,7 @@ export default function Home() {
                     return <Icon size={32} />;
                   })()}
                 </div>
-                <div className="eyebrow">MEET YOUR TASKFORCE</div>
+
                 <h2>
                   {selectedAgent.name}
                   <span className="profile-role">{selectedAgent.role}</span>
@@ -865,9 +1139,11 @@ export default function Home() {
                 <p className="subtle-text">
                   Activity summaries describe observable workflow steps. Private
                   model reasoning is not displayed.{" "}
-                  {s.mode === "demo"
-                    ? "This is a deterministic example."
-                    : "Events originate from authenticated backend tasks."}
+                  {customProperty
+                    ? "This is an uninspected custom preview. Uploaded images have not been analysed by Grok Bot."
+                    : s.mode === "demo"
+                      ? "This is a deterministic example."
+                      : "Events originate from authenticated backend tasks."}
                 </p>
                 <button className="primary-wide" onClick={() => setModal(null)}>
                   Follow {selectedAgent.name} in the apartment <Eye size={16} />
@@ -877,11 +1153,9 @@ export default function Home() {
             {modal === "report" && (
               <>
                 <div className="report-kicker">
-                  <span className="eyebrow">
-                    THE WILLOW APARTMENT / INSPECTION 001
-                  </span>
+                  <span className="eyebrow">Farnsworth House / inspection</span>
                   <span className="synthetic-label">
-                    {s.mode.toUpperCase()} · SYNTHETIC INPUTS
+                    {s.mode.toUpperCase()} · SYNTHETIC INCIDENTS
                   </span>
                 </div>
                 <div className="report-title">
@@ -890,13 +1164,13 @@ export default function Home() {
                       <Check size={24} />
                     </div>
                     <h2>
-                      A little care goes
-                      <br />a long way.
+                      Inspection
+                      <br />
+                      complete.
                     </h2>
                     <p>
-                      Your team’s inspection is complete.
+                      Findings and recommended actions.
                       <br />
-                      Here’s what needs your attention.
                     </p>
                   </div>
                   <div className="health-score">
@@ -911,7 +1185,7 @@ export default function Home() {
                     </svg>
                     <div>
                       <strong>{s.score}</strong>
-                      <span>PROPERTY HEALTH</span>
+                      <span>SCENARIO HEALTH</span>
                     </div>
                   </div>
                 </div>
@@ -946,7 +1220,7 @@ export default function Home() {
                   </div>
                 </div>
                 <p className="report-summary">{s.summary}</p>
-                <h3>Your action plan</h3>
+                <h3>Action plan</h3>
                 <div className="report-findings">
                   {[...s.findings]
                     .sort(

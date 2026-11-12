@@ -91,6 +91,8 @@ The reviewed SDK has zero runtime dependencies, fixed `api2.cursor.sh` broker ca
 
 Caretakr keeps all Grok secrets on the Node server. Operator cookies are signed, HttpOnly and SameSite=Strict (Secure on HTTPS); mutation routes check origin. Login attempts are rate-limited. MCP uses independent, role-bound bearer credentials of at least 24 characters. Unknown evidence references, duplicate IDs, forged role arguments, missing maintenance coverage and writes to completed runs are rejected. No browser endpoint accepts arbitrary finding/event publication.
 
+After a production build, run `node scripts/audit-build-secrets.mjs` on the trusted machine holding the runtime credentials. It checks every production/client/server artifact against actual secret values and inspects trace references and symlinks, printing only booleans and counts. It fails if credentials needed for a complete check are unavailable, any secret appears, or a sensitive file is referenced. Credentials remain outside the build.
+
 This hackathon backend deliberately uses bounded process-local state and long-running tasks. Run **one persistent Node process**. A server restart loses inspections; multiple replicas or serverless request freezing require a shared durable event store/worker. Do not deploy it as an ephemeral serverless workflow and assume jobs survive. The Next output tracing configuration explicitly excludes `.caretakr`, `.env*`, `.git` and `.concord` from every server build trace. Provision credentials on the running host (or use server environment secrets); they are never deployment artifacts. The local credential/receipt files are ignored by git; do not serve `.caretakr` as static assets.
 
 ## References inspected
@@ -100,3 +102,15 @@ This hackathon backend deliberately uses bounded process-local state and long-ru
 - [hermes-virtual-office](https://github.com/JuniorXcoder/hermes-virtual-office): source-backed collaboration handoffs and deduplication.
 - [AI-Office](https://github.com/Bogdusik/AI-Office): authoritative backend state, SSE heartbeats/snapshot reconciliation.
 - [grok-bot-avatar-engine](https://github.com/RongleCat/grok-bot-avatar-engine): considered for visual identity; its extracted client renderer was not copied. Caretakr uses original procedural geometry.
+
+## Floor plans, photos and reconstruction boundaries
+
+Property import is a **local visual preview**. Floor-plan room rectangles are drawn by the user and converted to geometry using the entered building width; uploaded room photos provide muted colour palettes and reference images. Files are retained in this browser's IndexedDB and rendered with local `blob:` URLs. They are not uploaded to the Caretakr backend or sent to Grok Bot. A `blob:` URL on this laptop is not reachable from Grok Bot's cloud computer.
+
+The existing Live inspection still interprets the explicitly synthetic EV-001–EV-005 scenario. Applying a custom visual layout does not turn those records into observations from the uploaded property. No AI image reconstruction, metric photogrammetry, automatic furniture recognition or new inspection of the uploaded photos is claimed.
+
+The app can display an already-trained, compatible `.splat` file. It does not train a Gaussian splat from these uploads. No CUDA training pipeline, remote training worker or supported cloud-training integration is configured. Rendering a trained splat and reconstructing one from photographs are different operations.
+
+The reviewed SDK explicitly does **not upload local files**. Its `attachmentPaths` parameter accepts server references from an upload that has already completed; passing a local path or inventing a file-upload endpoint would not attach an image. The [official Grok Bot messaging guide](https://docs.x.ai/grok-bot/chat-and-collaboration) supports attaching local files through the native app. A supported manual workflow is therefore: attach the source floor plan and photographs directly in Grok Bot, request a sourced room/layout summary with dimensions clearly marked known or uncertain, then use that result to guide the human tracing step in Caretakr. This native image-to-layout task has not been executed or automated by the current application, and arbitrary Grok-generated layout JSON is not yet an import format.
+
+A future automated vision workflow would require a verified supported file-upload mechanism, or an authenticated image service reachable by the cloud Bot with narrowly scoped expiring access. It would need explicit provenance and human verification before replacing synthetic inspection inputs. Neither local paths nor generic model-API calls are silently substituted for that integration.

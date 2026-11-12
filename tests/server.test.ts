@@ -17,9 +17,11 @@ import {
   completeInspection,
   registry,
   status,
+  emit,
 } from "../lib/server/store";
 import { callCaretakrTool } from "../lib/server/mcp";
 import { demoFindings } from "../lib/scenario";
+import {runDemo} from "../lib/server/demo";
 
 const originalEnv = { ...process.env };
 afterEach(() => {
@@ -342,4 +344,29 @@ test("demo session bootstrap requires browser same-origin metadata and creates a
   assert.match(setCookie, /SameSite=Strict/);
   assert.equal(isDemo(req({ Cookie: setCookie.split(";")[0] })), true);
   assert.equal(isOperator(req({ Cookie: setCookie.split(";")[0] })), false);
+});
+
+
+test("cancelled runs reject late findings, handoffs and nonterminal state before mutation", () => {
+  const run=createInspection('live');
+  run.status='error';status(run,'inspector','Error','Cancelled');
+  const beforeEvents=run.events.length,beforeAgent={...run.agents.inspector};
+  assert.throws(()=>status(run,'inspector','Investigating','Late response','bathroom'),/terminal/);
+  assert.throws(()=>emit(run,'inspector','tool.called',{tool:'record_finding'}),/terminal/);
+  assert.throws(()=>emit(run,'inspector','message.sent',{toAgentId:'maintenance'}),/terminal/);
+  assert.throws(()=>recordFinding(run,'inspector',demoFindings[0]),/not running/);
+  assert.deepEqual(run.agents.inspector,beforeAgent);
+  assert.equal(run.events.length,beforeEvents);
+  assert.equal(run.findings.length,0);
+});
+
+test("cancelled demo stages stop without publishing subsequent findings or completion", async () => {
+  const run=createInspection('demo');const workflow=runDemo(run,4);
+  await new Promise(resolve=>setTimeout(resolve,5));
+  run.status='error';status(run,'manager','Error','Cancelled');
+  emit(run,'manager','task.failed',{message:'Cancelled'});const terminalCount=run.events.length;
+  await workflow;
+  assert.equal(run.events.length,terminalCount);
+  assert.equal(run.findings.length,0);assert.equal(run.workOrders.length,0);
+  assert.equal(run.status,'error');assert.equal(run.score,null);
 });

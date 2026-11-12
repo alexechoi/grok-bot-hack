@@ -1,0 +1,138 @@
+{
+  "property": "Edith Farnsworth House",
+  "survey": "HABS IL-1105",
+  "assets": [
+    {
+      "id": "2011633512",
+      "title": "Bedroom of architect Mies van der Rohe's classic modernist Farnsworth House, now a property of the National Trust for Historic Preservation in Plano, Illinois LCCN2011633512.tif",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bedroom_of_architect_Mies_van_der_Rohe%27s_classic_modernist_Farnsworth_House,_now_a_property_of_the_National_Trust_for_Historic_Preservation_in_Plano,_Illinois_LCCN2011633512.tif",
+      "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/82/Bedroom_of_architect_Mies_van_der_Rohe%27s_classic_modernist_Farnsworth_House%2C_now_a_property_of_the_National_Trust_for_Historic_Preservation_in_Plano%2C_Illinois_LCCN2011633512.tif/lossy-page1-3840px-thumbnail.tif.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/8/82/Bedroom_of_architect_Mies_van_der_Rohe%27s_classic_modernist_Farnsworth_House%2C_now_a_property_of_the_National_Trust_for_Historic_Preservation_in_Plano%2C_Illinois_LCCN2011633512.tif",
+      "bytes": 1706131,
+      "sha256": "38a0aebf3bca3232f374331afe0a1b858ad700f0ac7f2b2a991e5c361e3008c3",
+      "photographer": "Carol M. Highsmith",
+      "capturedAt": "between 1980 and 2006",
+      "rights": "Public domain",
+      "rightsEvidence": "PD-Highsmith on file page; photographer stipulates public domain",
+      "credit": "Carol M. Highsmith Archive, Library of Congress, Prints and Photographs Division",
+      "localUrl": "/properties/farnsworth/2011633512.jpg",
+      "derivative": {
+        "sha256": "f0221f20de6fb4542d46e264196cc1f9f9cd40f881d76bc8945e46c156a1c7c3",
+        "bytes": 280235,
+        "width": 1600,
+        "height": 1225,
+        "changes": "Resized proportionally to 1600px wide and JPEG recompressed; no cropping or content alteration."
+      }
+    },
+    {
+      "id": "2010630502",
+      "title": "Interior view, living room, the Farnsworth House, Plano, Illinois LCCN2010630502.tif",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Interior_view,_living_room,_the_Farnsworth_House,_Plano,_Illinois_LCCN2010630502.tif",
+      "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e9/Interior_view%2C_living_room%2C_the_Farnsworth_House%2C_Plano%2C_Illinois_LCCN2010630502.tif/lossy-page1-3840px-Interior_view%2C_living_room%2C_the_Farnsworth_House%2C_Plano%2C_Illinois_LCCN2010630502.tif.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/e/e9/Interior_view%2C_living_room%2C_the_Farnsworth_House%2C_Plano%2C_Illinois_LCCN2010630502.tif",
+      "bytes": 1442689,
+      "sha256": "fec805ff6042f7996a626fb876dabef0659a70fbdd8d8eabc54f8a9c23272549",
+      "photographer": "Carol M. Highsmith",
+      "capturedAt": "Taken on\u00a023 July 2009, 22:01\u00a0(according to <span lang=\"en\" dir=\"ltr\"><a href=\"https://en.wikipedia.org/wiki/Exif\" class=\"extiw\" title=\"en:Exif\">Exif</a></span> data)",
+      "rights": "Public domain",
+      "rightsEvidence": "PD-Highsmith on file page; photographer stipulates public domain",
+      "credit": "Carol M. Highsmith Archive, Library of Congress, Prints and Photographs Division",
+      "localUrl": "/properties/farnsworth/2010630502.jpg",
+      "derivative": {
+        "sha256": "56d3ae22811fd60929132125af6e24ab40dbd931833eec0114a2ffc281ca4275",
+        "bytes": 247948,
+        "width": 1600,
+        "height": 1067,
+        "changes": "Resized proportionally to 1600px wide and JPEG recompressed; no cropping or content alteration."
+      }
+    },
+    {
+      "id": "2011633479",
+      "title": "Interior views of the 1951 Farnsworth, a modernist classic \"glass house\" designed by architect Mies van der Rohe, Plano, Illinois LCCN2011633479.tif",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Interior_views_of_the_1951_Farnsworth,_a_modernist_classic_%22glass_house%22_designed_by_architect_Mies_van_der_Rohe,_Plano,_Illinois_LCCN2011633479.tif",
+      "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2c/Interior_views_of_the_1951_Farnsworth%2C_a_modernist_classic_%22glass_house%22_designed_by_architect_Mies_van_der_Rohe%2C_Plano%2C_Illinois_LCCN2011633479.tif/lossy-page1-3840px-Interior_views_of_the_1951_Farnsworth%2C_a_modernist_classic_%22glass_house%22_designed_by_architect_Mies_van_der_Rohe%2C_Plano%2C_Illinois_LCCN2011633479.tif.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/2/2c/Interior_views_of_the_1951_Farnsworth%2C_a_modernist_classic_%22glass_house%22_designed_by_architect_Mies_van_der_Rohe%2C_Plano%2C_Illinois_LCCN2011633479.tif",
+      "bytes": 1895106,
+      "sha256": "1ae70c6608d7354220ae6c1d8715d98d7cbf31eca391b5ce99fffd5c4afe5778",
+      "photographer": "Carol M. Highsmith",
+      "capturedAt": "between 1980 and 2006",
+      "rights": "Public domain",
+      "rightsEvidence": "PD-Highsmith on file page; photographer stipulates public domain",
+      "credit": "Carol M. Highsmith Archive, Library of Congress, Prints and Photographs Division",
+      "localUrl": "/properties/farnsworth/2011633479.jpg",
+      "derivative": {
+        "sha256": "92d8bc182ad0b4ae8340064c435da08deb4a7619327fa26491258cdc9e60545f",
+        "bytes": 339324,
+        "width": 1600,
+        "height": 1244,
+        "changes": "Resized proportionally to 1600px wide and JPEG recompressed; no cropping or content alteration."
+      }
+    },
+    {
+      "id": "2011633480",
+      "title": "Interior views of the 1951 Farnsworth, a modernist classic \"glass house\" designed by architect Mies van der Rohe, Plano, Illinois LCCN2011633480.tif",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Interior_views_of_the_1951_Farnsworth,_a_modernist_classic_%22glass_house%22_designed_by_architect_Mies_van_der_Rohe,_Plano,_Illinois_LCCN2011633480.tif",
+      "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8e/Interior_views_of_the_1951_Farnsworth%2C_a_modernist_classic_%22glass_house%22_designed_by_architect_Mies_van_der_Rohe%2C_Plano%2C_Illinois_LCCN2011633480.tif/lossy-page1-3840px-Interior_views_of_the_1951_Farnsworth%2C_a_modernist_classic_%22glass_house%22_designed_by_architect_Mies_van_der_Rohe%2C_Plano%2C_Illinois_LCCN2011633480.tif.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/8/8e/Interior_views_of_the_1951_Farnsworth%2C_a_modernist_classic_%22glass_house%22_designed_by_architect_Mies_van_der_Rohe%2C_Plano%2C_Illinois_LCCN2011633480.tif",
+      "bytes": 1538135,
+      "sha256": "16df8de61dadafae979f79e0844207cb1363915c0fefd9d2c74e5169a0ba4a5d",
+      "photographer": "Carol M. Highsmith",
+      "capturedAt": "between 1980 and 2006",
+      "rights": "Public domain",
+      "rightsEvidence": "PD-Highsmith on file page; photographer stipulates public domain",
+      "credit": "Carol M. Highsmith Archive, Library of Congress, Prints and Photographs Division",
+      "localUrl": "/properties/farnsworth/2011633480.jpg",
+      "derivative": {
+        "sha256": "7d12b8eeddd9641a3e63693d0625a6a8e897c2059d5cebd8745d35807f1a2a10",
+        "bytes": 201644,
+        "width": 1600,
+        "height": 1242,
+        "changes": "Resized proportionally to 1600px wide and JPEG recompressed; no cropping or content alteration."
+      }
+    },
+    {
+      "id": "2011633481",
+      "title": "Interior views of the 1951 Farnsworth, a modernist classic \"glass house\" designed by architect Mies van der Rohe, Plano, Illinois LCCN2011633481.tif",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Interior_views_of_the_1951_Farnsworth,_a_modernist_classic_%22glass_house%22_designed_by_architect_Mies_van_der_Rohe,_Plano,_Illinois_LCCN2011633481.tif",
+      "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d3/Interior_views_of_the_1951_Farnsworth%2C_a_modernist_classic_%22glass_house%22_designed_by_architect_Mies_van_der_Rohe%2C_Plano%2C_Illinois_LCCN2011633481.tif/lossy-page1-3840px-Interior_views_of_the_1951_Farnsworth%2C_a_modernist_classic_%22glass_house%22_designed_by_architect_Mies_van_der_Rohe%2C_Plano%2C_Illinois_LCCN2011633481.tif.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/d/d3/Interior_views_of_the_1951_Farnsworth%2C_a_modernist_classic_%22glass_house%22_designed_by_architect_Mies_van_der_Rohe%2C_Plano%2C_Illinois_LCCN2011633481.tif",
+      "bytes": 1568097,
+      "sha256": "01f0cefe476b8ff0743ec20f5ba5add373445e72de0ec2838883ff127c974892",
+      "photographer": "Carol M. Highsmith",
+      "capturedAt": "between 1980 and 2006",
+      "rights": "Public domain",
+      "rightsEvidence": "PD-Highsmith on file page; photographer stipulates public domain",
+      "credit": "Carol M. Highsmith Archive, Library of Congress, Prints and Photographs Division",
+      "localUrl": "/properties/farnsworth/2011633481.jpg",
+      "derivative": {
+        "sha256": "49fb796c45abf4b3d0def727701a8ad60d7e01b5ab63ed1ed75128fc982959fc",
+        "bytes": 279290,
+        "width": 1600,
+        "height": 1253,
+        "changes": "Resized proportionally to 1600px wide and JPEG recompressed; no cropping or content alteration."
+      }
+    },
+    {
+      "id": "floorplan",
+      "title": "Plan - Edith Farnsworth House, 14520 River Road, Plano, Kendall County, IL HABS ILL,47-PLAN.V,1- (sheet 3 of 8).tif",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Plan_-_Edith_Farnsworth_House,_14520_River_Road,_Plano,_Kendall_County,_IL_HABS_ILL,47-PLAN.V,1-_(sheet_3_of_8).tif",
+      "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/ff/Plan_-_Edith_Farnsworth_House%2C_14520_River_Road%2C_Plano%2C_Kendall_County%2C_IL_HABS_ILL%2C47-PLAN.V%2C1-_%28sheet_3_of_8%29.tif/lossy-page1-3840px-Plan_-_Edith_Farnsworth_House%2C_14520_River_Road%2C_Plano%2C_Kendall_County%2C_IL_HABS_ILL%2C47-PLAN.V%2C1-_%28sheet_3_of_8%29.tif.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/f/ff/Plan_-_Edith_Farnsworth_House%2C_14520_River_Road%2C_Plano%2C_Kendall_County%2C_IL_HABS_ILL%2C47-PLAN.V%2C1-_%28sheet_3_of_8%29.tif",
+      "bytes": 447829,
+      "sha256": "7a2b6e81a0ed35fd0cf71a398d5b911e1449a7bacfde8db21b51af5c12262d0c",
+      "photographer": "Milnarik, Elizabeth, creator",
+      "capturedAt": "2009",
+      "rights": "Public domain",
+      "rightsEvidence": "PD-US-NPS on file page",
+      "credit": "Historic American Buildings Survey, National Park Service, Library of Congress",
+      "localUrl": "/properties/farnsworth/floorplan.jpg",
+      "derivative": {
+        "sha256": "7a2b6e81a0ed35fd0cf71a398d5b911e1449a7bacfde8db21b51af5c12262d0c",
+        "bytes": 447829,
+        "width": 3840,
+        "height": 2560,
+        "changes": "Wikimedia-generated JPEG derivative; no further changes."
+      }
+    }
+  ]
+}

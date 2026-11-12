@@ -1,0 +1,22 @@
+# Property reference dataset
+
+Caretakr's sourced property example is Edith Farnsworth House in Plano, Illinois: one physical residence with a measured floor plan and matching archival interior photographs. It is now a house museum. The images describe historic appearance; they do not establish its current condition.
+
+The selected six files are in `public/properties/farnsworth/`. `manifest.json` and `ATTRIBUTION.md` retain original record identifiers, exact image and rights-record URLs, credits, recorded dates, transformations and checksums. `lib/property-dataset.ts` exposes the same provenance to the application. Selected drawings have an explicit PD-US-NPS statement; selected Carol M. Highsmith photographs have an explicit public-domain stipulation. Rights were checked per file rather than inferred from collection membership or metadata licensing.
+
+## Layout and coverage
+
+The [measured floor plan, HABS IL-1105 sheet 3](https://www.loc.gov/pictures/item/il0323.sheet.00003a/) shows an open-plan dwelling with a central service core. Dining, living, office and sleeping are zones, not separate enclosed rooms. The application's `hallway` identifier refers to circulation beside the wardrobe. The deck measures 23.57 × 8.74 metres; the lower terrace measures 16.84 × 6.90 metres. The enclosed width is an image-based approximation of 16.83 metres.
+
+The selected photographs show living, dining, sleeping and circulation areas. No selected photograph depicts the kitchen or bathroom. Their plan geometry can be represented, but their current or photographed condition must remain unknown. HABS's later photographic index identifies privately credited photographs; no public-domain permission was established for those kitchen/bathroom images, so they were excluded.
+
+The [elevations and sections, sheet 5](https://www.loc.gov/pictures/item/il0323.sheet.00005a/) were inspected as a modelling reference. Above the lower-terrace datum, the main floor is 2′4″ (0.7112 m), ceiling 11′9″ and cornice 13′6″. Thus the clear floor-to-ceiling height is 2.8702 m and the floor-to-cornice height 3.4036 m. Ground level varies and is not assigned a fabricated absolute height. These drawing references do not turn the procedural model into a measured survey or Gaussian reconstruction.
+
+Synthetic incidents and meter records remain separate from these archival assets. A water leak, blocked route or energy anomaly must never be presented as an observed defect in a real reference photograph.
+
+## Other evaluated sources
+
+- [Rent3D](https://www.cs.toronto.edu/~fidler/projects/rent3D.html): the linked archive returned 404 during evaluation. The authors' later access form required identity/institution details and described noncommercial access; no sample or image-reuse grant was obtained. No rental-listing images were scraped or bundled.
+- OpenHouse and ZInD were evaluated separately and were not used as a source of cleared, accessible sample assets.
+
+User-uploaded plans, photos and trained splats remain a separate browser-local preview path. Uploading reference photographs does not train a Gaussian scene or supply an inspection result.

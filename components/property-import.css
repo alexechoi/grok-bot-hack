@@ -1,0 +1,541 @@
+.ct-import-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background: rgb(12 15 13 / 0.72);
+}
+.ct-import-panel {
+  width: min(820px, 100%);
+  max-height: min(92dvh, 1000px);
+  display: flex;
+  flex-direction: column;
+  background: #f3f1e9;
+  color: #30372f;
+  border-radius: 16px;
+  box-shadow: 0 28px 90px rgb(0 0 0 / 0.27);
+  outline: none;
+  overflow: hidden;
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.ct-import-panel button,
+.ct-import-panel input,
+.ct-import-panel select {
+  font: inherit;
+}
+.ct-import-panel button,
+.ct-import-panel input,
+.ct-import-panel select,
+.ct-import-panel label:has(input[type="file"]) {
+  touch-action: manipulation;
+}
+.ct-import-panel button:focus-visible,
+.ct-import-panel input:focus-visible,
+.ct-import-panel select:focus-visible,
+.ct-import-panel summary:focus-visible,
+.ct-import-panel label:focus-within {
+  outline: 2px solid #65816a;
+  outline-offset: 3px;
+}
+.ct-import-panel button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.ct-import-panel button {
+  cursor: pointer;
+}
+.ct-import-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 28px 32px 22px;
+}
+.ct-import-header h2 {
+  font-size: 27px;
+  letter-spacing: -0.035em;
+  font-weight: 500;
+  line-height: 1.15;
+  margin: 0 0 8px;
+}
+.ct-import-header p,
+.ct-import-sectionHeading p {
+  margin: 0;
+  color: #65705f;
+  font-size: 13px;
+}
+.ct-import-iconButton {
+  background: transparent;
+  border: 0;
+  color: #62705c;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.ct-import-iconButton:hover {
+  background: #e6e8dd;
+}
+.ct-import-body {
+  padding: 0 32px 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: #aab09f transparent;
+  scrollbar-width: thin;
+}
+.ct-import-topFields {
+  display: grid;
+  grid-template-columns: 1fr 160px;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+.ct-import-topFields label,
+.ct-import-positionControls label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: #5c6655;
+}
+.ct-import-panel input:not([type="file"]),
+.ct-import-panel select {
+  border: 1px solid #d1d6c6;
+  background: #faf9f4;
+  color: #35402e;
+  border-radius: 7px;
+  min-width: 0;
+  padding: 10px 12px;
+  min-height: 42px;
+}
+.ct-import-panel input::placeholder {
+  color: #7a8272;
+}
+.ct-import-unitInput {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+.ct-import-unitInput input {
+  width: 100%;
+  padding-right: 35px !important;
+}
+.ct-import-unitInput > span {
+  position: absolute;
+  right: 12px;
+  pointer-events: none;
+  color: #697461;
+}
+.ct-import-modeSwitch {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #dce0d1;
+}
+.ct-import-modeSwitch button {
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 9px 12px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6c7564;
+  font-size: 13px;
+}
+.ct-import-modeSwitch button[aria-pressed="true"] {
+  color: #35442e;
+  border-bottom-color: #7d916a;
+}
+.ct-import-modeSwitch button:hover {
+  color: #303b28;
+}
+.ct-import-uploadZone {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 9px;
+  min-height: 170px;
+  padding: 24px;
+  background: #e9ecdf;
+  border: 1px dashed #b8c1a8;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  color: #697858;
+  text-align: center;
+}
+.ct-import-uploadZone:hover {
+  background: #e0e6d5;
+}
+.ct-import-uploadZone strong {
+  font-size: 15px;
+  font-weight: 500;
+  color: #435437;
+}
+.ct-import-uploadZone span {
+  font-size: 12px;
+}
+.ct-import-panel input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+.ct-import-panel input[type="file"]:disabled {
+  cursor: not-allowed;
+}
+.ct-import-sectionHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 22px 0 12px;
+}
+.ct-import-sectionHeading h3 {
+  font-size: 15px;
+  margin: 0 0 3px;
+  font-weight: 550;
+}
+.ct-import-optional {
+  font-size: 12px;
+  color: #7c8375;
+  font-weight: 400;
+  margin-left: 5px;
+}
+.ct-import-textButton {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 0;
+  padding: 8px 0;
+  color: #526947;
+  font-size: 12px !important;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.ct-import-textButton:hover {
+  color: #233c1a;
+  text-decoration: underline;
+}
+.ct-import-roomChoices {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.ct-import-roomChoices button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #d5dacd;
+  background: transparent;
+  border-radius: 6px;
+  min-height: 36px;
+  padding: 7px 9px;
+  font-size: 12px;
+}
+.ct-import-roomChoices button[aria-pressed="true"] {
+  background: #e2e8d7;
+  border-color: #8d9f7d;
+}
+.ct-import-roomChoices button > span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+.ct-import-plan {
+  position: relative;
+  width: 100%;
+  background: #fff;
+  overflow: hidden;
+  border-radius: 5px;
+  touch-action: none;
+  user-select: none;
+  cursor: crosshair;
+  min-height: 50px;
+}
+.ct-import-plan > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+  object-fit: fill;
+  pointer-events: none;
+}
+.ct-import-trace {
+  position: absolute;
+  border: 1.5px solid #657b53;
+  pointer-events: none;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.ct-import-trace > span {
+  display: inline-block;
+  background: #eef0e4;
+  color: #3d4d32;
+  font-size: 11px;
+  padding: 2px 5px;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ct-import-selectedTrace {
+  border: 2px solid #3c5931;
+}
+.ct-import-planFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  color: #69755f;
+  font-size: 12px;
+  margin-top: 7px;
+}
+.ct-import-positionControls {
+  margin: 4px 0 14px;
+  color: #64705b;
+  font-size: 12px;
+}
+.ct-import-positionControls summary {
+  cursor: pointer;
+  padding: 6px 0;
+}
+.ct-import-positionControls > div {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 8px;
+}
+.ct-import-positionControls input {
+  width: 100%;
+  padding: 7px !important;
+}
+.ct-import-photoTools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ct-import-photoTools select {
+  max-width: 140px;
+  padding: 7px 8px;
+  min-height: 36px;
+  font-size: 12px;
+}
+.ct-import-addPhoto {
+  display: flex;
+  position: relative;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #e3e9d8;
+  color: #4d623f;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.ct-import-addPhoto:hover {
+  background: #d8e1c8;
+}
+.ct-import-photos {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.ct-import-photo {
+  position: relative;
+  min-width: 0;
+}
+.ct-import-photo > img {
+  display: block;
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.ct-import-photo > select {
+  display: block;
+  width: 100%;
+  font-size: 11px;
+  padding: 6px;
+  margin: 6px 0;
+  min-height: 32px;
+}
+.ct-import-removePhoto {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  background: #f1f2e7;
+  color: #45533d;
+  border: 0;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.1);
+}
+.ct-import-photo small {
+  font-size: 11px;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  color: #68755d;
+}
+.ct-import-photo small i {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.ct-import-help,
+.ct-import-splatContent p {
+  color: #707b66;
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 20px 0 0;
+  max-width: 65ch;
+}
+.ct-import-savedNote {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  color: #637a50;
+  font-size: 12px;
+  margin: 16px 0 0;
+}
+.ct-import-error {
+  padding: 12px 14px;
+  background: #efe0d5;
+  color: #814d37;
+  font-size: 13px;
+  border-radius: 7px;
+  line-height: 1.6;
+  margin: 16px 0 0;
+}
+.ct-import-footer {
+  padding: 18px 32px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: #eeeee4;
+}
+.ct-import-footer p {
+  font-size: 12px;
+  color: #65735a;
+  margin: 0;
+  line-height: 1.7;
+}
+.ct-import-footer p > span {
+  font-size: 11px;
+  color: #7b846e;
+}
+.ct-import-applyButton {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  background: #35492c;
+  color: #f4f4e9;
+  border: 0;
+  padding: 12px 22px;
+  min-height: 44px;
+  border-radius: 7px;
+  font-size: 13px !important;
+  white-space: nowrap;
+}
+.ct-import-applyButton:hover {
+  background: #263b1e;
+}
+@media (max-width: 600px) {
+  .ct-import-backdrop {
+    padding: 12px;
+  }
+  .ct-import-panel {
+    max-height: 94dvh;
+    border-radius: 13px;
+  }
+  .ct-import-header {
+    padding: 22px 20px 18px;
+  }
+  .ct-import-header h2 {
+    font-size: 24px;
+  }
+  .ct-import-body {
+    padding: 0 20px 20px;
+  }
+  .ct-import-topFields {
+    grid-template-columns: 1fr 115px;
+    gap: 12px;
+  }
+  .ct-import-modeSwitch button {
+    font-size: 12px;
+    padding-left: 7px;
+    padding-right: 7px;
+  }
+  .ct-import-sectionHeading {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .ct-import-photoTools {
+    width: 100%;
+  }
+  .ct-import-photos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ct-import-photo > img {
+    height: 110px;
+  }
+  .ct-import-planFooter {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0;
+  }
+  .ct-import-roomChoices {
+    gap: 5px;
+  }
+  .ct-import-roomChoices button {
+    min-height: 36px;
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+  .ct-import-footer {
+    padding: 16px 20px;
+    gap: 10px;
+  }
+  .ct-import-footer p {
+    font-size: 11px;
+  }
+  .ct-import-footer p > span {
+    font-size: 10px;
+  }
+  .ct-import-applyButton {
+    padding: 11px 14px;
+  }
+  .ct-import-positionControls > div {
+    gap: 6px;
+  }
+  .ct-import-positionControls label {
+    font-size: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ct-import-panel * {
+    scroll-behavior: auto;
+  }
+}

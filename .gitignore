@@ -46,3 +46,8 @@ next-env.d.ts
 # Caretakr local credentials and signed session secret
 /.caretakr/
 !.env.example
+
+# Downloaded skill engine and local review/runtime state
+/.agents/skills/impeccable/scripts/bin/
+/.impeccable/
+/.concord/

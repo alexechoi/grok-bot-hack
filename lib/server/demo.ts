@@ -10,6 +10,7 @@ import {
   status,
 } from "./store";
 export async function runDemo(run: Inspection, speed = 1) {
+  const showReference=(agentId:'inspector'|'manager',roomId:string)=>{const photo=run.evidence?.find(item=>item.type==='photo'&&item.roomId===roomId&&item.photoUrl);if(photo)emit(run,agentId,'photo.review.started',{source:'demo-script',evidenceIds:[photo.id],photoUrl:photo.photoUrl,sourceUrl:photo.sourceUrl,task:'Demo reference display only; no live visual analysis',demo:true},roomId);};
   const pause = async (ms: number) => { await wait(ms / speed); if (run.status !== 'running') throw new Error('Cancelled'); };
   try {
     const result = await executeProvider(demoProvider);
@@ -18,6 +19,7 @@ export async function runDemo(run: Inspection, speed = 1) {
       source: "demo-script",
     });
     status(run, "manager", "Assigned", "Assigning room inspections", "living");
+    showReference('manager','living');
     await pause(2200);
     status(
       run,
@@ -73,6 +75,7 @@ export async function runDemo(run: Inspection, speed = 1) {
     status(run, "energy", "Reporting", "Energy anomaly published", "kitchen");
     await pause(2000);
     status(run, "inspector", "Moving", "Checking the escape route", "hallway");
+    showReference('inspector','hallway');
     status(
       run,
       "maintenance",

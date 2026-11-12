@@ -30,6 +30,6 @@ console.log(
     file: ".env.local",
     secretsPrinted: false,
     instruction:
-      "Restart the dev server after setup. Read the operator token locally to unlock Live mode; never paste it into chat.",
+      "Start npm run dev and open its local Live workspace link. Grok credentials stay on the server.",
   }),
 );

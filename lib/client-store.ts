@@ -1,6 +1,15 @@
 "use client";
 import { create } from "zustand";
-import { agents, AgentId, AgentState, Finding, WorkOrder } from "./scenario";
+import {
+  agents,
+  AgentId,
+  AgentState,
+  Finding,
+  WorkOrder,
+  Evidence,
+  PhotoObservation,
+  evidence as scenarioEvidence,
+} from "./scenario";
 export type VisualAgent = {
   id: AgentId;
   color: string;
@@ -11,6 +20,7 @@ export type VisualAgent = {
 export type WorkflowEvent = {
   id: string;
   timestamp: string;
+  inspectionId: string;
   agentId: AgentId;
   type: string;
   roomId?: string;
@@ -26,7 +36,11 @@ export type Snapshot = {
   workOrders: WorkOrder[];
   events: WorkflowEvent[];
   summary?: string;
-  score?: number;
+  score?: number | null;
+  datasetId?: string;
+  propertyName?: string;
+  evidence?: Evidence[];
+  photoObservations?: PhotoObservation[];
 };
 const initialAgents = (): VisualAgent[] =>
   agents.map((a) => ({
@@ -38,6 +52,10 @@ const initialAgents = (): VisualAgent[] =>
   }));
 type State = {
   inspectionId: string | null;
+  datasetId: string | null;
+  propertyName: string;
+  evidence: Evidence[];
+  photoObservations: PhotoObservation[];
   mode: "live" | "demo";
   status: string;
   agents: VisualAgent[];
@@ -58,6 +76,10 @@ type State = {
 };
 export const useInspection = create<State>((set) => ({
   inspectionId: null,
+  datasetId: null,
+  propertyName: "",
+  evidence: scenarioEvidence,
+  photoObservations: [],
   mode: "demo",
   status: "idle",
   agents: initialAgents(),
@@ -75,6 +97,10 @@ export const useInspection = create<State>((set) => ({
   reset: () =>
     set({
       inspectionId: null,
+      datasetId: null,
+      propertyName: "",
+      evidence: scenarioEvidence,
+      photoObservations: [],
       status: "idle",
       agents: initialAgents(),
       findings: [],
@@ -84,45 +110,79 @@ export const useInspection = create<State>((set) => ({
       score: null,
       error: null,
       selectedFinding: null,
+      selectedAgent: null,
+      focusRoom: null,
+      cameraMode: "orbit",
     }),
   hydrate: (s) =>
-    set((state) => ({
-      inspectionId: s.id,
-      mode: s.mode,
-      status: s.status,
-      findings: s.findings,
-      workOrders: s.workOrders,
-      events: s.events,
-      summary: s.summary || "",
-      score: s.score ?? null,
-      agents: state.agents.map((a) => {
-        const source = Array.isArray(s.agents)
-          ? s.agents.find((x: unknown) => (x as { id: string }).id === a.id)
-          : (s.agents as Record<string, unknown>)[a.id];
-        return { ...a, ...((source as Partial<VisualAgent>) || {}) };
-      }),
-    })),
+    set((state) =>
+      state.inspectionId !== s.id
+        ? {}
+        : {
+            inspectionId: s.id,
+            datasetId: s.datasetId || null,
+            propertyName: s.propertyName || "",
+            evidence: s.evidence || scenarioEvidence,
+            photoObservations: s.photoObservations || [],
+            mode: s.mode,
+            status: s.status,
+            findings: s.findings,
+            workOrders: s.workOrders,
+            events: s.events,
+            summary: s.summary || "",
+            score: s.score ?? null,
+            error:
+              s.status === "error"
+                ? String(
+                    s.events.findLast((e) => e.type === "task.failed")?.payload
+                      .message || "Inspection stopped. Review agent activity.",
+                  )
+                : null,
+            agents: state.agents.map((a) => {
+              const source = Array.isArray(s.agents)
+                ? s.agents.find(
+                    (x: unknown) => (x as { id: string }).id === a.id,
+                  )
+                : (s.agents as Record<string, unknown>)[a.id];
+              return { ...a, ...((source as Partial<VisualAgent>) || {}) };
+            }),
+          },
+    ),
   apply: (e) =>
     set((s) => {
-      if (s.events.some((x) => x.id === e.id)) return {};
+      if (
+        e.inspectionId !== s.inspectionId ||
+        s.events.some((x) => x.id === e.id)
+      )
+        return {};
       const p = e.payload;
       let state: AgentState | undefined = p.state as AgentState | undefined;
       if (e.type === "agent.moving") state = "Moving";
       if (e.type === "task.failed") state = "Error";
       if (e.type === "task.completed") state = "Completed";
       const next: Partial<State> = {
-        events: [...s.events, e],
-        agents: s.agents.map((a) =>
-          a.id === e.agentId
-            ? {
-                ...a,
-                ...(state ? { state } : {}),
-                ...(e.roomId ? { roomId: e.roomId } : {}),
-                ...(typeof p.task === "string" ? { task: p.task } : {}),
-              }
-            : a,
-        ),
+        events: [...s.events, e].slice(-500),
+        agents:
+          !state && !e.roomId && typeof p.task !== "string"
+            ? s.agents
+            : s.agents.map((a) =>
+                a.id === e.agentId
+                  ? {
+                      ...a,
+                      ...(state ? { state } : {}),
+                      ...(e.roomId ? { roomId: e.roomId } : {}),
+                      ...(typeof p.task === "string" ? { task: p.task } : {}),
+                    }
+                  : a,
+              ),
       };
+      if (e.type === "photo.observation.created" && p.observation) {
+        const o = p.observation as PhotoObservation;
+        next.photoObservations = [
+          ...s.photoObservations.filter((x) => x.id !== o.id),
+          o,
+        ];
+      }
       if (e.type === "finding.created" && p.finding) {
         const f = p.finding as Finding;
         next.findings = [...s.findings.filter((x) => x.id !== f.id), f];

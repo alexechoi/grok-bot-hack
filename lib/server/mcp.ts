@@ -8,6 +8,7 @@ import {
 import { z } from "zod";
 import {
   evidence,
+  Evidence,
   energyMetrics,
   baselineReadings,
   findingSchema,
@@ -16,6 +17,7 @@ import {
   workOrderSchema,
 } from "../scenario";
 import { Role } from "./auth";
+import {datasetContext} from "./dataset";
 import {
   completeInspection,
   createWorkOrder,
@@ -30,7 +32,7 @@ const definitions = [
   {
     name: "get_property",
     description:
-      "Read the illustrative property and current live inspection. All evidence is synthetic.",
+      "Read the property reference and active live inspection. Archival photos are genuine context; incident and energy inputs are synthetic training scenarios.",
     schema: z.object({}),
   },
   {
@@ -103,11 +105,14 @@ export async function callCaretakrTool(
           toolCallId: randomUUID(),
           source: "authenticated-mcp",
         });
+    const selected=[...registry.runs.values()].find(item=>item.mode==='live'&&item.status==='running')??datasetContext();
     return {
-      id: "illustrative-apartment-01",
-      name: "The Willow Apartment",
+      id:selected?.datasetId??"synthetic-apartment",
+      name:selected?.propertyName??"The Willow Apartment",
       synthetic: true,
-      digitalTwin: "Original procedural geometry, not a captured real address",
+      digitalTwin:selected?.provenance??"Original procedural geometry, not a captured real address",
+      referencePhotosEnabled:selected?.referencePhotosEnabled??false,
+      syntheticIncidents:true,
       rooms,
       scoringMethod,
       activeInspectionIds: [...registry.runs.values()]
@@ -127,13 +132,15 @@ export async function callCaretakrTool(
   });
   if (name === "get_room_evidence") {
     const { roomId } = args as z.infer<typeof runInput> & { roomId: string };
-    const items = evidence.filter((e) => e.roomId === roomId);
+    const items:Evidence[] = (run.evidence??evidence).filter((e:Evidence) => e.roomId === roomId);
     emit(
       run,
       role,
       "evidence.reviewed",
       {
         evidenceIds: items.map((e) => e.id),
+        reviewType:"source-metadata-read; not visual pixel review",
+        photoUrl:items.find(item=>item.photoUrl)?.photoUrl,
         toolCallId,
         source: "authenticated-mcp",
       },

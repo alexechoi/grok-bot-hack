@@ -30,27 +30,58 @@ export type Evidence = {
   sourceName: string;
   content: string;
   synthetic: boolean;
-  capturedAt: string;
+  capturedAt?: string;
+  sourceUrl?: string;
+  photoUrl?: string;
+  imageUrl?: string;
+  photoUnavailable?: boolean;
+  rights?: string;
+  attribution?: string;
+  sourceDatasetId?: string;
+  scope?: 'reference-context' | 'synthetic-incident' | 'synthetic-reading' | 'synthetic-context';
 };
+export const photoObservationResultSchema = z.object({
+  roomId: z.enum(['bathroom','kitchen','hallway','bedroom','living']),
+  evidenceId: z.string().min(1),
+  sourceUrl: z.string().url(),
+  access: z.enum(['viewed','unavailable']),
+  imageSha256: z.string().regex(/^[a-f0-9]{64}$/i).nullable(),
+  width: z.number().int().positive().max(20000).nullable(),
+  height: z.number().int().positive().max(20000).nullable(),
+  summary: z.string().min(1).max(4000),
+  limitations: z.string().min(1).max(2000),
+});
+export const photoObservationSchema = photoObservationResultSchema.extend({
+  id: z.string().min(1),
+  agentId: z.enum(['inspector','energy']),
+  timestamp: z.string().datetime(),
+  provenance: z.union([
+    z.object({provider:z.literal('grok-bot-sdk'),botId:z.string(),requestId:z.string(),entryId:z.string().nullable(),sourceCursor:z.string(),accessBasis:z.enum(['bot-reported-visual-review','verified-image-digest-and-bot-review']),toolActivityObserved:z.boolean(),sourceDigestVerified:z.boolean()}),
+    z.object({provider:z.literal('dataset-manifest'),reason:z.string().min(1)}),
+  ]),
+});
+export type PhotoObservation=z.infer<typeof photoObservationSchema>;
 export const evidence: Evidence[] = [
   {
     id: "EV-001",
     roomId: "bathroom",
     type: "note",
-    sourceName: "Bathroom walkthrough note",
+    sourceName: "Synthetic bathroom incident note",
     content:
-      "A brown water stain approximately 30 cm across is visible at the ceiling junction above the shower. Paint is bubbling. No active dripping was observed. Moisture readings and source investigation have not yet been carried out.",
+      "Synthetic training incident, not an observation of the reference property or its photographs: simulate a brown water stain approximately 30 cm across at the bathroom ceiling junction, with bubbling paint and no active dripping. Moisture readings and source investigation have not yet been carried out. This scenario does not assert that any reference photo shows staining or damage.",
     synthetic: true,
+    scope: 'synthetic-incident',
     capturedAt: "2026-11-12T09:00:00Z",
   },
   {
     id: "EV-002",
     roomId: "hallway",
     type: "note",
-    sourceName: "Hallway walkthrough note",
+    sourceName: "Synthetic circulation-route incident note",
     content:
-      "Two storage boxes are positioned beside the entrance and narrow the apparent escape route. Clear width was not measured. Review and clear the route, and confirm safe access.",
+      "Synthetic training incident, not an observation of the reference property or its photographs: simulate two storage boxes near an entrance circulation route, narrowing apparent escape access. Clear width is not measured. Recommend review and clearance of the simulated obstruction. This scenario does not assert that the reference photographs contain boxes or a safety defect.",
     synthetic: true,
+    scope: 'synthetic-incident',
     capturedAt: "2026-11-12T09:05:00Z",
   },
   {
@@ -61,6 +92,7 @@ export const evidence: Evidence[] = [
     content:
       "Seven comparable six-hour baseline nights: 1.1, 1.3, 1.2, 1.0, 1.4, 1.2, 1.2 kWh. Inspection night: 4.8 kWh. Meter covers the kitchen circuit. These are synthetic totals, not a real meter feed.",
     synthetic: true,
+    scope: 'synthetic-reading',
     capturedAt: "2026-11-12T06:00:00Z",
   },
   {
@@ -71,16 +103,18 @@ export const evidence: Evidence[] = [
     content:
       "Two residents. Both report being away on the inspection night. Fridge remains on; oven and dishwasher are scheduled off between 00:00 and 06:00. Occupancy is a synthetic assumption, not independently verified.",
     synthetic: true,
+    scope: 'synthetic-context',
     capturedAt: "2026-11-12T09:00:00Z",
   },
   {
     id: "EV-005",
     roomId: "living",
-    type: "epc",
-    sourceName: "Illustrative EPC information",
+    type: "note",
+    sourceName: "Synthetic operations context · not a property certificate",
     content:
-      "Synthetic EPC band C. Electric space heating and hot water. No public EPC record or real property address was used. Bedroom and living room walkthrough notes describe no apparent concerns; that is not a safety certification.",
+      "Synthetic operations scenario only: electric heating and hot-water loads are hypothetical and have not been verified for any reference building. No EPC rating, property certificate, live meter feed or actual occupancy record is asserted. The bedroom and living zone have no incident notes in this scenario; that is not a safety certification.",
     synthetic: true,
+    scope: 'synthetic-context',
     capturedAt: "2026-11-12T09:00:00Z",
   },
 ];
@@ -110,7 +144,7 @@ export const demoFindings: Finding[] = [
     category: "water",
     title: "Suspected ceiling moisture",
     description:
-      "Water staining and bubbling paint suggest a possible moisture issue above the shower. The source is unconfirmed; a note alone cannot establish an active leak.",
+      "Synthetic scenario: water staining and bubbling paint suggest a possible moisture issue above the shower. The source is unconfirmed; a note alone cannot establish an active leak.",
     severity: "high",
     confidence: null,
     evidenceIds: ["EV-001"],
@@ -124,7 +158,7 @@ export const demoFindings: Finding[] = [
     roomId: "kitchen",
     category: "energy",
     title: "Unusual overnight consumption",
-    description: `The kitchen used ${energyMetrics.observed} kWh against a ${energyMetrics.baseline} kWh comparable-night average: ${energyMetrics.deviationPercent}% above baseline while occupants were away. A running appliance, schedule fault or metering error warrants investigation. Cause is not confirmed.`,
+    description: `Synthetic scenario: the kitchen used ${energyMetrics.observed} kWh against a ${energyMetrics.baseline} kWh comparable-night average: ${energyMetrics.deviationPercent}% above baseline while occupants were away. A running appliance, schedule fault or metering error warrants investigation. Cause is not confirmed.`,
     severity: "medium",
     confidence: null,
     evidenceIds: ["EV-003", "EV-004", "EV-005"],
@@ -139,7 +173,7 @@ export const demoFindings: Finding[] = [
     category: "safety",
     title: "Potentially obstructed escape route",
     description:
-      "Storage boxes appear to narrow the hallway escape route. Clear width has not been measured, so compliance cannot be determined from this walkthrough note.",
+      "Synthetic scenario: storage boxes appear to narrow the hallway escape route. Clear width has not been measured, so compliance cannot be determined from this walkthrough note.",
     severity: "high",
     confidence: null,
     evidenceIds: ["EV-002"],
@@ -157,7 +191,7 @@ export function healthScore(findings: Finding[]) {
   );
 }
 export const scoringMethod =
-  "Demo operational score: start at 100; subtract 3 per low, 8 per medium, 15 per high and 30 per critical finding; floor at 0. Not a certified building or safety assessment.";
+  "Operational scenario score: start at 100; subtract 3 per low, 8 per medium, 15 per high and 30 per critical finding; floor at 0. Not a certified building or safety assessment.";
 export const reportSchema = z.object({
   summary: z.string().min(1),
   findings: z.array(findingSchema).min(1).max(20),
@@ -173,7 +207,7 @@ export function validateAnalysis(input: unknown): Analysis {
     for (const id of f.evidenceIds) {
       const e = evidence.find((e) => e.id === id);
       if (!e) throw new Error(`Unknown evidence: ${id}`);
-      if (e.roomId !== f.roomId && e.type !== "epc")
+      if (e.roomId !== f.roomId && e.type !== "epc" && e.scope !== 'synthetic-context')
         throw new Error(`Evidence ${id} does not support room ${f.roomId}`);
     }
   }
@@ -244,9 +278,9 @@ export const rooms: Record<
   string,
   { name: string; point: [number, number, number] }
 > = {
-  living: { name: "Living room", point: [-3, 0, 2.2] },
-  kitchen: { name: "Kitchen", point: [-3, 0, -2.2] },
-  bathroom: { name: "Bathroom", point: [3.4, 0, -2.3] },
-  bedroom: { name: "Bedroom", point: [3.4, 0, 2.4] },
-  hallway: { name: "Hallway", point: [0.4, 0, 0] },
+  living: { name: "Living area", point: [4, 0, 2.7] },
+  kitchen: { name: "Kitchen core", point: [4.2, 0, -3.65] },
+  bathroom: { name: "Guest bathroom core", point: [1.65, 0, -1.1] },
+  bedroom: { name: "Sleeping area", point: [10.4, 0, -3.2] },
+  hallway: { name: "Entry / open-plan circulation", point: [-3.8, 0, 0.1] },
 };

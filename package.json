@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/dev.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -11,7 +11,8 @@
     "grok:setup": "node scripts/grok-setup.mjs",
     "grok:provision": "node scripts/grok-provision.mjs",
     "grok:check": "node scripts/grok-check.mjs",
-    "grok:live": "node scripts/grok-live.mjs"
+    "grok:live": "node scripts/grok-live.mjs",
+    "unlock:live": "node scripts/unlock-live.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",
