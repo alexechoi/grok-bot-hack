@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<div align="center">
 
-## Getting Started
+# Caretakr
 
-First, run the development server:
+### A tiny AI team. A whole apartment to care for.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Turn property evidence into prioritised maintenance actions—then watch the team work inside an interactive 3D apartment.
+
+**Grok Bot Real Estate Hackathon London · Track 4: Asset and property management**
+
+[Try the demo](#try-it-in-60-seconds) · [Meet the team](#four-specialists-one-shared-mission) · [Grok Bot integration](docs/grok-integration.md)
+
+![Caretakr illustrated overview: four specialists turn property evidence into findings, work orders and a report.](docs/assets/caretakr-overview.svg)
+
+</div>
+
+## From “something looks wrong” to “here’s what to do”
+
+Walkthrough notes, meter readings and maintenance decisions belong in one connected workflow. Caretakr gives each specialist a job, ties findings to their sources and turns the results into a plan a property manager can act on.
+
+| 🏠 See the work | 🔎 Follow the evidence | 🛠 Leave with a plan |
+| :--- | :--- | :--- |
+| Orbit a five-room 3D twin. Follow agents, focus rooms and open finding markers. | Inspect source evidence, timestamped activity and specialist handoffs. | Review priorities, work orders and a health score. Export HTML or JSON. |
+
+## Four specialists. One shared mission.
+
+| Agent | Owns | Hands off |
+| :--- | :--- | :--- |
+| 🔵 **Scout** · Inspector | Walkthrough evidence | Sourced apparent defects |
+| 🟣 **Watt** · Energy Analyst | Consumption and occupancy | Energy anomalies |
+| 🟠 **Fix** · Maintenance Engineer | Published specialist findings | Prioritised work orders |
+| 🟢 **Cleo** · Property Manager | Brief and coordination | Final sourced plan |
+
+```mermaid
+flowchart LR
+    A["Cleo · brief"] --> B["Scout · inspect"]
+    A --> C["Watt · analyse"]
+    B --> D["Fix · plan actions"]
+    C --> D
+    D --> E["Cleo · final report"]
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Try it in 60 seconds
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Requires **Node.js 22.13+** and a browser with WebGL.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```sh
+npm install
+npm run grok:setup
+npm run dev
+```
 
-## Learn More
+Open [localhost:3000](http://localhost:3000), keep **Demo** selected and click **Inspect property**. No Grok Bot account needed.
 
-To learn more about Next.js, take a look at the following resources:
+**Judge’s walkthrough:** follow an agent → open a finding → inspect its evidence → open the completed report → download the action plan. Use **4×** playback for a quick tour.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| 💧 Bathroom | ⚡ Kitchen | 🚪 Hallway |
+| :--- | :--- | :--- |
+| Suspected ceiling moisture | **4.8 kWh** vs **1.2 kWh** baseline | Potentially obstructed escape route |
+| Investigate the source | **300% above baseline** | Clear and measure access |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+*Demo uses synthetic evidence: 3 findings → 3 work orders → an illustrative 62/100 score. The original procedural apartment represents evidence review, not physical robotic inspection or a certified safety assessment.*
 
-## Deploy on Vercel
+## Real Grok Bot teammates. Visible handoffs.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**Demo** runs a deterministic backend scenario. **Live** dispatches real tasks to Grok Bot teammates through a pinned, unofficial SDK, validates their replies and streams workflow events into the scene. Live errors stay visible.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The [verified Live run](docs/grok-integration.md#verified-full-four-bot-inspection) completed with **4 Bots · 3 sourced findings · 3 work orders · 68 timestamped events**. Its score was **76/100**, calculated from the live findings; Live outputs can differ from Demo.
+
+**Custom MCP tools** let connected Bots read evidence, publish findings, create work orders and complete inspections. SDK replies and actual MCP calls are distinguished in the event stream. [Connect your Bots →](docs/grok-integration.md)
+
+<div align="center">
+
+**Next.js 16 · React 19 · React Three Fiber · Three.js · Zustand · Zod**
+
+Node backend → validated events → SSE → interactive 3D scene
+
+</div>
+
+## Under the hood
+
+[Setup, architecture & checks](docs/technical-guide.md) · [Live integration & security](docs/grok-integration.md) · [Environment settings](.env.example) · [Attribution](docs/reference-patterns.md) · [License](LICENSE)
+
+Run one persistent Node process; inspection state is held in memory. Keep `.env.local` and `.caretakr/` private. Grok credentials stay on the server.
