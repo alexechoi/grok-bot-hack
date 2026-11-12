@@ -130,6 +130,10 @@ export default function Home() {
       if (!response.ok) throw new Error(result.error === "RATE_LIMITED" ? "Too many attempts. Try again in a minute." : result.error === "AUTH_REQUIRED" ? "That passcode is incorrect. Try again." : result.error === "WORKSPACE_NOT_CONFIGURED" || result.error === "SESSION_NOT_CONFIGURED" ? "Workspace sign-in needs server setup. Contact the workspace owner." : "Could not sign in. Please try again.");
       setWorkspacePassword("");
       await refreshIntegration();
+      if (new URL(window.location.href).searchParams.has("inspection")) {
+        window.location.reload();
+        return;
+      }
       chooseMode("live");
     } catch (error) {setLoginError(error instanceof Error ? error.message : "Could not sign in.");}
     finally {setLoginPending(false);}
@@ -160,14 +164,16 @@ export default function Home() {
     const controller = new AbortController();
     void fetch(`/api/inspections/${encodeURIComponent(id)}`, { signal: controller.signal })
       .then(async (response) => {
+        if (response.status === 401) {
+          useInspection.setState({ mode: "live" });
+          openModal("integration");
+          throw new Error("Sign in to view this inspection.");
+        }
         if (!response.ok) throw new Error("This inspection is unavailable in this session.");
         const snapshot = await response.json() as Snapshot;
         if (controller.signal.aborted) return;
         useInspection.setState({ inspectionId: id });
         useInspection.getState().hydrate(snapshot);
-        const url = new URL(window.location.href);
-        url.searchParams.delete("inspection");
-        window.history.replaceState(null, "", url.pathname + url.search);
       })
       .catch((error) => { if (!controller.signal.aborted) setNotice(error.message); });
     return () => controller.abort();
@@ -242,7 +248,13 @@ export default function Home() {
     if (modal === "property" || modal === "gallery") return;
     dialogRef.current?.querySelector<HTMLElement>("button")?.focus();
   }, [modal]);
+  const clearInspectionLink = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("inspection");
+    window.history.replaceState(null, "", url.pathname + url.search);
+  };
   const restoreDemo = () => {
+    clearInspectionLink();
     s.reset();
     setCustomProperty(null);
     useInspection.setState((current) => ({
@@ -251,6 +263,7 @@ export default function Home() {
     }));
   };
   const applyProperty = (property: CustomProperty) => {
+    clearInspectionLink();
     stream.current?.close();
     s.reset();
     setCustomProperty(property);
@@ -259,6 +272,7 @@ export default function Home() {
   };
   const chooseMode = (mode: "demo" | "live") => {
     if (mode === s.mode || s.status === "running") return;
+    clearInspectionLink();
     stream.current?.close();
     s.reset();
     useInspection.setState({
@@ -289,6 +303,9 @@ export default function Home() {
       });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || "Could not start inspection");
+      const inspectionUrl = new URL(window.location.href);
+      inspectionUrl.searchParams.set("inspection", data.id);
+      window.history.replaceState(null, "", inspectionUrl.pathname + inspectionUrl.search);
       s.reset();
       useInspection.setState({
         inspectionId: data.id,

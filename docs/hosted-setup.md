@@ -1,5 +1,7 @@
 # Hosted Live on Netlify
 
+Production was verified on 2026-11-12: inspection `60276bed-57e4-4b33-bbe2-38fbd3f5e6dd` completed in 90 seconds with eight actual Grok Bot replies, three independently source-verified photo reviews, three findings, three work orders and a 76/100 scenario score. [Execution evidence](grok-integration.md#verified-full-four-bot-inspection).
+
 Website visitors do not run npm commands. Open `/?mode=live`, enter the private workspace password and start an inspection. The server sets a signed HttpOnly, Secure cookie. Provider credentials are never sent to the browser. The owner can distribute or rotate the workspace password separately from Grok Bot credentials.
 
 ## Server configuration

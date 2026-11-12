@@ -69,7 +69,7 @@ Open [localhost:3000](http://localhost:3000), keep **Demo** selected and click *
 
 **Demo** runs a deterministic backend scenario. **Live** dispatches real tasks to Grok Bot teammates through a pinned, unofficial SDK, validates their replies and streams workflow events into the scene. Live errors stay visible.
 
-The [verified Webster Live run](docs/grok-integration.md#verified-full-four-bot-inspection) completed in under two minutes: **4 Bots · 3 source-verified photo reviews · 3 simulated incident findings · 3 work orders · 85 events**. Each reviewed image passed an independent SHA-256 and dimension check. The scenario score was **76/100**; Live classifications can differ from Demo.
+The [verified hosted Webster Live run](docs/grok-integration.md#verified-full-four-bot-inspection) completed in 90 seconds: **4 Bots · 3 source-verified photo reviews · 3 simulated incident findings · 3 work orders · 116 events**. Each reviewed image passed an independent SHA-256 and dimension check. The scenario score was **76/100**; Live classifications can differ from Demo.
 
 **Custom MCP tools** let connected Bots read evidence, publish findings, create work orders and complete inspections. SDK replies and actual MCP calls are distinguished in the event stream. [Connect your Bots →](docs/grok-integration.md)
 
