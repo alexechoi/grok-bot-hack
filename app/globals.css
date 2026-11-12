@@ -3211,3 +3211,38 @@ button {
     bottom: 88px;
   }
 }
+.gallery-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--muted);
+  min-height: 38px;
+  padding: 6px 0;
+  font-size: 12px;
+}
+.gallery-button:hover {
+  color: var(--text);
+}
+@media (max-width: 768px) {
+  .gallery-button {
+    font-size: 11px;
+    gap: 5px;
+  }
+  .top-actions {
+    gap: 12px;
+  }
+  .import-button {
+    width: 24px;
+  }
+  .topbar {
+    padding: 0 16px;
+  }
+  .brand {
+    font-size: 22px;
+  }
+  .brand-icon {
+    width: 29px;
+    height: 29px;
+  }
+}

@@ -75,7 +75,7 @@ export function PhotoReviewCard({
         ) : (
           <p>
             {mode === "demo"
-              ? "Archival reference · synthetic scenario"
+              ? "Reference photo · synthetic scenario"
               : "Grok Bot is examining the source image."}
           </p>
         )}
@@ -109,7 +109,7 @@ export function SourceImageDetails({
         </>
       )}
       <p className="source-context">
-        Archival reference photograph. Demo incidents are synthetic and are not
+        Reference photograph. Demo incidents are synthetic and are not
         assertions about this image.
       </p>
       {observation && (
@@ -149,7 +149,7 @@ export function SourceImageDetails({
           target="_blank"
           rel="noreferrer"
         >
-          Library of Congress record <ArrowUpRight size={14} />
+          Original source <ArrowUpRight size={14} />
         </a>
       )}
     </>

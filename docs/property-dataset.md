@@ -1,6 +1,14 @@
 # Property reference dataset
 
-Caretakr's sourced property example is Edith Farnsworth House in Plano, Illinois: one physical residence with a measured floor plan and matching archival interior photographs. It is now a house museum. The images describe historic appearance; they do not establish its current condition.
+Caretakr's active example is Webster House, from the [Openhouse-3D Webster example](https://github.com/yunfanye/openhouse-3d/tree/b6e5d9b40b9f1d2c12775d8fd5e6a370897cb907/houses/webster). The user selected it for this hackathon reference demo. Five matching photographs show its living room, kitchen, main-floor bedroom, bathroom, and entry/staircase; image 31 supplies the same house's floor plan. Raw image URLs are pinned to commit `b6e5d9b40b9f1d2c12775d8fd5e6a370897cb907`; no Webster image files are bundled into this repository.
+
+`lib/webster-dataset.ts` retains per-image source URLs, original Redfin URLs, exact-byte SHA-256 values and dimensions. All five selected photographs are 1280 × 853 pixels; the plan is 835 × 1080. Photographer and capture dates are not identified in the source manifest. The plan credits Bluesky Media / bsm.photos. Original image rights are retained; Openhouse-3D's MIT code license does not relicense the images. The manifest records `rightsVerified: false` and `referenceUseAuthorized: true` separately.
+
+Webster's `plan.py` supplies reconstruction room coordinates and distinguishes inferred hidden geometry. Those coordinates support an illustrative cutaway; they do not establish present-day property condition. Synthetic inspection incidents remain separate from actual source photographs.
+
+## Public-domain fallback
+
+The fallback is Edith Farnsworth House in Plano, Illinois: one physical residence with a measured floor plan and matching archival interior photographs. It is now a house museum. The images describe historic appearance; they do not establish its current condition.
 
 The selected six files are in `public/properties/farnsworth/`. `manifest.json` and `ATTRIBUTION.md` retain original record identifiers, exact image and rights-record URLs, credits, recorded dates, transformations and checksums. `lib/property-dataset.ts` exposes the same provenance to the application. Selected drawings have an explicit PD-US-NPS statement; selected Carol M. Highsmith photographs have an explicit public-domain stipulation. Rights were checked per file rather than inferred from collection membership or metadata licensing.
 

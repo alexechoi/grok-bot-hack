@@ -32,6 +32,12 @@ import FarnsworthHouse, {
   farnsworthRoute,
   type PropertyZoneMap,
 } from "./farnsworth-house";
+import WebsterHouse, {
+  websterZones,
+  websterOffice,
+  websterOverview,
+  websterRoute,
+} from "./webster-house";
 import type { CustomProperty } from "@/lib/property-source";
 
 type Point = [number, number, number];
@@ -49,7 +55,7 @@ type SceneFinding = {
   severity: string;
 };
 export type PropertySceneProps = {
-  propertyId?: "farnsworth" | "willow";
+  propertyId?: "webster" | "farnsworth" | "willow";
   customProperty?: CustomProperty | null;
   agents: SceneAgent[];
   findings: SceneFinding[];
@@ -71,7 +77,9 @@ const willowRooms: PropertyZoneMap = {
   hallway: { name: "Hallway", point: [0.4, 0, 0] },
 };
 const SceneRooms = createContext<PropertyZoneMap>(willowRooms);
-const SceneProperty = createContext<"farnsworth" | "willow">("willow");
+const SceneProperty = createContext<"webster" | "farnsworth" | "willow">(
+  "willow",
+);
 const ReducedMotion = createContext(false);
 function subscribeMotion(listener: () => void) {
   const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -1206,6 +1214,22 @@ const agentOffsets: Record<string, Point> = {
   maintenance: [0.35, 0, 0.55],
   manager: [0, 0, 0],
 };
+function targetWebster(agent: SceneAgent): Vector3 {
+  if (agent.id === "manager") return new Vector3(...websterOffice);
+  if (agent.state.toLowerCase() === "idle") {
+    const stations: Point[] = [
+      [-0.7, 0, 7.4],
+      [0.4, 0, 5.7],
+      [-0.75, 0, 3.4],
+    ];
+    return new Vector3(
+      ...stations[agent.id === "inspector" ? 0 : agent.id === "energy" ? 1 : 2],
+    );
+  }
+  return new Vector3(
+    ...(websterZones[agent.roomId]?.point ?? websterZones.hallway.point),
+  );
+}
 function targetFarnsworth(agent: SceneAgent): Vector3 {
   if (agent.id === "manager") return new Vector3(...farnsworthOffice);
   if (agent.state.toLowerCase() === "idle") {
@@ -1273,6 +1297,7 @@ function Robot({
 }) {
   const roomMap = useContext(SceneRooms),
     propertyId = useContext(SceneProperty);
+  const [hovered, setHovered] = useState(false);
   const reducedMotion = useContext(ReducedMotion);
   const group = useRef<Group>(null),
     body = useRef<Group>(null),
@@ -1282,17 +1307,21 @@ function Robot({
     () =>
       customPoint
         ? new Vector3(...customPoint)
-        : propertyId === "farnsworth"
-          ? targetFarnsworth(agent)
-          : targetFor(agent),
+        : propertyId === "webster"
+          ? targetWebster(agent)
+          : propertyId === "farnsworth"
+            ? targetFarnsworth(agent)
+            : targetFor(agent),
     [agent, customPoint, propertyId],
   );
   const [initial] = useState(() =>
       customPoint
         ? new Vector3(...customPoint)
-        : propertyId === "farnsworth"
-          ? targetFarnsworth(agent)
-          : targetFor(agent),
+        : propertyId === "webster"
+          ? targetWebster(agent)
+          : propertyId === "farnsworth"
+            ? targetFarnsworth(agent)
+            : targetFor(agent),
     ),
     path = useRef<Vector3[]>([]),
     lastRoom = useRef(agent.roomId);
@@ -1313,7 +1342,13 @@ function Robot({
     if (lastRoom.current !== agent.roomId) {
       // All inter-room journeys pass through the door openings and central corridor.
       const old = roomMap[lastRoom.current]?.point;
-      if (propertyId === "farnsworth")
+      if (propertyId === "webster")
+        route.push(
+          ...websterRoute(lastRoom.current, agent.roomId).map(
+            (point) => new Vector3(...point),
+          ),
+        );
+      else if (propertyId === "farnsworth")
         route.push(
           ...farnsworthRoute(lastRoom.current, agent.roomId).map(
             (point) => new Vector3(...point),
@@ -1373,7 +1408,7 @@ function Robot({
       } else {
         current.addScaledVector(
           delta.normalize(),
-          Math.min(dt, 0.05) * (propertyId === "farnsworth" ? 2.1 : 1.5),
+          Math.min(dt, 0.05) * (propertyId === "willow" ? 1.5 : 2.1),
         );
         body.current.rotation.y = Math.atan2(delta.x, delta.z);
         moving = true;
@@ -1402,10 +1437,15 @@ function Robot({
     <group
       ref={group}
       position={initial}
-      scale={propertyId === "farnsworth" && !customPoint ? 1.18 : previewScale}
+      scale={propertyId !== "willow" && !customPoint ? 1.13 : previewScale}
     >
       <group
         ref={body}
+        onPointerOver={(event) => {
+          event.stopPropagation();
+          setHovered(true);
+        }}
+        onPointerOut={() => setHovered(false)}
         onClick={(e) => {
           e.stopPropagation();
           onSelect();
@@ -1522,12 +1562,18 @@ function Robot({
           />
         </mesh>
       )}
-      <SceneLabel
-        position={[0, 1.55, 0]}
-        text={names[agent.id] ?? agent.id}
-        color={agent.color}
-        detail={selected || investigating ? agent.task : undefined}
-      />
+      {(propertyId === "willow" ||
+        selected ||
+        hovered ||
+        investigating ||
+        normalizedState === "reporting") && (
+        <SceneLabel
+          position={[0, 1.55, 0]}
+          text={names[agent.id] ?? agent.id}
+          color={agent.color}
+          detail={selected || investigating ? agent.task : undefined}
+        />
+      )}
     </group>
   );
 }
@@ -1637,7 +1683,8 @@ function FindingMarker({
 }
 function EnergyZone() {
   const source = useContext(SceneProperty),
-    farnsworth = source === "farnsworth";
+    farnsworth = source === "farnsworth",
+    webster = source === "webster";
   const reducedMotion = useContext(ReducedMotion);
   const group = useRef<Group>(null);
   useFrame(({ clock }) => {
@@ -1649,9 +1696,19 @@ function EnergyZone() {
       });
   });
   return (
-    <group position={farnsworth ? [4.2, 0, -3.65] : [-3.3, 0, -2.25]}>
+    <group
+      position={
+        webster
+          ? [3.6, 0, -0.1]
+          : farnsworth
+            ? [4.2, 0, -3.65]
+            : [-3.3, 0, -2.25]
+      }
+    >
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
-        <planeGeometry args={farnsworth ? [7.2, 1.15] : [5.15, 4.1]} />
+        <planeGeometry
+          args={webster ? [3.65, 3.7] : farnsworth ? [7.2, 1.15] : [5.15, 4.1]}
+        />
         <meshBasicMaterial
           color="#ac7bf7"
           transparent
@@ -1690,7 +1747,7 @@ function CameraRig({
   resetKey,
   positions,
 }: {
-  propertyId?: "farnsworth" | "willow";
+  propertyId?: "webster" | "farnsworth" | "willow";
   customProperty?: CustomProperty | null;
   cameraMode: PropertySceneProps["cameraMode"];
   focusRoom: string | null;
@@ -1710,18 +1767,22 @@ function CameraRig({
   useEffect(() => {
     const fitWidth = customProperty
       ? customProperty.width * 0.81 + customProperty.depth * 0.59 + 3
-      : propertyId === "farnsworth"
-        ? farnsworthOverview.width * (size.width < 700 ? 0.5 : 0.81) +
-          farnsworthOverview.depth * (size.width < 700 ? 0.86 : 0.59) +
-          3
-        : 17;
+      : propertyId === "webster"
+        ? websterOverview.width * 0.81 + websterOverview.depth * 0.59 + 3
+        : propertyId === "farnsworth"
+          ? farnsworthOverview.width * (size.width < 700 ? 0.5 : 0.81) +
+            farnsworthOverview.depth * (size.width < 700 ? 0.86 : 0.59) +
+            3
+          : 17;
     const fitHeight = customProperty
       ? customProperty.width * 0.35 + customProperty.depth * 0.49 + 5
-      : propertyId === "farnsworth"
-        ? farnsworthOverview.width * (size.width < 700 ? 0.55 : 0.35) +
-          farnsworthOverview.depth * (size.width < 700 ? 0.32 : 0.49) +
-          5
-        : 13;
+      : propertyId === "webster"
+        ? websterOverview.width * 0.35 + websterOverview.depth * 0.49 + 5
+        : propertyId === "farnsworth"
+          ? farnsworthOverview.width * (size.width < 700 ? 0.55 : 0.35) +
+            farnsworthOverview.depth * (size.width < 700 ? 0.32 : 0.49) +
+            5
+          : 13;
     const base = Math.min(size.width / fitWidth, size.height / fitHeight);
     const perspective = Boolean(customProperty?.splatUrl);
     desiredZoom.current = perspective
@@ -1740,15 +1801,21 @@ function CameraRig({
         : [0, 0, 0]
       : focusRoom && roomMap[focusRoom]
         ? roomMap[focusRoom].point
-        : propertyId === "farnsworth"
+        : propertyId === "webster"
           ? [
-              farnsworthOverview.centre[0] - (size.width > 900 ? 2 : 0),
+              websterOverview.centre[0] - (size.width > 900 ? 1.3 : 0),
               0,
-              farnsworthOverview.centre[2] + (size.width > 900 ? 1.4 : 0),
+              websterOverview.centre[2] + (size.width > 900 ? 0.9 : 0),
             ]
-          : size.width > 900
-            ? [-1.1, 0, 0.8]
-            : [0, 0, 0];
+          : propertyId === "farnsworth"
+            ? [
+                farnsworthOverview.centre[0] - (size.width > 900 ? 2 : 0),
+                0,
+                farnsworthOverview.centre[2] + (size.width > 900 ? 1.4 : 0),
+              ]
+            : size.width > 900
+              ? [-1.1, 0, 0.8]
+              : [0, 0, 0];
     wanted.current.set(p[0], 0, p[2]);
     desiredPosition.current
       .copy(wanted.current)
@@ -1766,7 +1833,7 @@ function CameraRig({
         .normalize()
         .multiplyScalar(distance)
         .add(wanted.current);
-    } else if (customProperty || propertyId === "farnsworth") {
+    } else if (customProperty || propertyId !== "willow") {
       desiredPosition.current
         .sub(wanted.current)
         .multiplyScalar(
@@ -1774,7 +1841,9 @@ function CameraRig({
             1,
             (customProperty
               ? Math.max(customProperty.width, customProperty.depth)
-              : farnsworthOverview.width) / 14,
+              : propertyId === "webster"
+                ? Math.max(websterOverview.width, websterOverview.depth)
+                : farnsworthOverview.width) / 14,
           ),
         )
         .add(wanted.current);
@@ -1848,14 +1917,10 @@ function World(props: PropertySceneProps) {
             ? Math.max(props.customProperty.width, props.customProperty.depth) *
                 6 +
               40
-            : props.propertyId === "farnsworth"
+            : props.propertyId !== "willow"
               ? 110
               : 35,
-          props.customProperty
-            ? 600
-            : props.propertyId === "farnsworth"
-              ? 300
-              : 80,
+          props.customProperty ? 600 : props.propertyId !== "willow" ? 300 : 80,
         ]}
       />
       <ambientLight intensity={1.2} color="#fff9ee" />
@@ -1915,6 +1980,8 @@ function World(props: PropertySceneProps) {
           property={props.customProperty}
           onRoomSelect={props.onRoomSelect}
         />
+      ) : props.propertyId === "webster" ? (
+        <WebsterHouse onRoomSelect={props.onRoomSelect} />
       ) : props.propertyId === "farnsworth" ? (
         <FarnsworthHouse onRoomSelect={props.onRoomSelect} />
       ) : (
@@ -2033,7 +2100,7 @@ function FirstFrame({ onReady }: { onReady: () => void }) {
   return null;
 }
 export default function PropertyScene({
-  propertyId = "farnsworth",
+  propertyId = "webster",
   ...otherProps
 }: PropertySceneProps) {
   const props = { ...otherProps, propertyId };
@@ -2084,16 +2151,20 @@ export default function PropertyScene({
           <ReducedMotion.Provider value={reducedMotion}>
             <SceneProperty.Provider
               value={
-                !props.customProperty && props.propertyId === "farnsworth"
-                  ? "farnsworth"
-                  : "willow"
+                !props.customProperty && props.propertyId === "webster"
+                  ? "webster"
+                  : !props.customProperty && props.propertyId === "farnsworth"
+                    ? "farnsworth"
+                    : "willow"
               }
             >
               <SceneRooms.Provider
                 value={
-                  !props.customProperty && props.propertyId === "farnsworth"
-                    ? farnsworthZones
-                    : willowRooms
+                  !props.customProperty && props.propertyId === "webster"
+                    ? websterZones
+                    : !props.customProperty && props.propertyId === "farnsworth"
+                      ? farnsworthZones
+                      : willowRooms
                 }
               >
                 <World {...props} />

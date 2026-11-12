@@ -8,14 +8,14 @@ import {
 import { runDemo } from "@/lib/server/demo";
 import { integrationStatus, runLive } from "@/lib/server/grok";
 import {datasetContext} from "@/lib/server/dataset";
-import {DATASET_ID} from "@/lib/property-dataset";
+import {DATASET_ID,FARNSWORTH_DATASET_ID} from "@/lib/dataset-registry";
 import { createInspection, registry } from "@/lib/server/store";
 export async function POST(request: Request) {
   try {
     const { mode, speed, datasetId } = z
       .object({
         mode: z.enum(["demo", "live"]),
-        datasetId:z.enum([DATASET_ID,"synthetic-apartment"]).optional(),
+        datasetId:z.enum([DATASET_ID,FARNSWORTH_DATASET_ID,"synthetic-apartment"]).optional(),
         speed: z
           .union([z.literal(1), z.literal(2), z.literal(4)])
           .optional()

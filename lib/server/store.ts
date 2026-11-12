@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import {verifySourceImage} from './dataset';
 import {
   agents,
   AgentId,
@@ -210,7 +211,7 @@ export function recordPhotoObservation(run:Inspection,input:unknown){
   const observation=photoObservationSchema.parse(input);
   const photo=(run.evidence??evidence).find(item=>item.id===observation.evidenceId);
   if(!photo||photo.roomId!==observation.roomId||photo.sourceUrl!==observation.sourceUrl||photo.scope!=='reference-context')throw new Error('Photo observation source mismatch');
-  if(observation.access==='viewed'&&(!photo.imageUrl||photo.photoUnavailable||photo.type!=='photo'||observation.provenance.provider!=='grok-bot-sdk'))throw new Error('Unavailable photo cannot be marked visually reviewed');
+  if(observation.access==='viewed'&&(!photo.imageUrl||photo.photoUnavailable||photo.type!=='photo'||observation.provenance.provider!=='grok-bot-sdk'||!observation.provenance.sourceDigestVerified||!verifySourceImage(photo.imageUrl,observation,run.datasetId)))throw new Error('Unavailable or unverified photo cannot be marked visually reviewed');
   if(observation.provenance.provider==='dataset-manifest'&&(observation.access!=='unavailable'||!photo.photoUnavailable))throw new Error('Manifest observations only record unavailable reference photos');
   if(run.photoObservations.some(item=>item.id===observation.id||item.evidenceId===observation.evidenceId&&item.agentId===observation.agentId))throw new Error('Duplicate photo observation');
   run.photoObservations.push(observation);
@@ -272,6 +273,10 @@ export function completeInspection(
     );
   if (!summary.trim() || summary.length > 12000)
     throw new Error("Invalid summary");
+  if(run.mode==='live'&&run.referencePhotosEnabled){
+    if(['hallway','bathroom','kitchen'].some(roomId=>!run.photoObservations.some(observation=>observation.roomId===roomId)))throw new Error('Every reference zone requires a reviewed-photo result or an explicit unavailability record');
+    if(!run.photoObservations.some(observation=>observation.access==='viewed'))throw new Error('No reference photograph passed actual visual-review and source-byte verification');
+  }
   if (
     !run.findings.length ||
     run.findings.some(

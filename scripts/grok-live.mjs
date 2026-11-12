@@ -4,10 +4,10 @@ try{process.loadEnvFile('.env.local');}catch{}
 const origin=process.env.CARETAKR_LOCAL_URL||'http://localhost:3000';
 const headers={Authorization:'Bearer '+process.env.CARETAKR_OPERATOR_TOKEN};
 try{
- let id=process.argv[process.argv.indexOf('--watch')+1];if(!process.argv.includes('--watch')){const response=await fetch(origin+'/api/inspections',{method:'POST',headers:{...headers,'Content-Type':'application/json'},body:JSON.stringify({mode:'live'})});const run=await response.json();if(!response.ok)throw new Error(run.error||'START_FAILED');id=run.id;}
+ let id=process.argv[process.argv.indexOf('--watch')+1];if(!process.argv.includes('--watch')){const response=await fetch(origin+'/api/inspections',{method:'POST',headers:{...headers,'Content-Type':'application/json'},body:JSON.stringify({mode:'live',...(process.argv.includes('--dataset')?{datasetId:process.argv[process.argv.indexOf('--dataset')+1]}:{})})});const run=await response.json();if(!response.ok)throw new Error(run.error||'START_FAILED');id=run.id;}
  console.log(JSON.stringify({phase:'watching',id,mode:'live'}));
  const getRun=async()=>{const response=await fetch(origin+'/api/inspections/'+encodeURIComponent(id),{headers});if(!response.ok)throw new Error('SNAPSHOT_FAILED');return response.json();};
- let run=await getRun();
+ let run=await getRun();console.log(JSON.stringify({phase:'property-context',datasetId:run.datasetId,propertyName:run.propertyName,referencePhotos:run.evidence?.filter(item=>item.type==='photo'&&!item.synthetic).length}));
  if(run.status==='running'){
   const response=await fetch(origin+'/api/inspections/'+encodeURIComponent(id)+'/events',{headers,signal:AbortSignal.timeout(300000)});if(!response.ok)throw new Error('SSE_FAILED');
   const reader=response.body.getReader(),decoder=new TextDecoder();let buffer='',done=false;

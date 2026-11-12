@@ -2,8 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowUpRight,
   ArrowRight,
@@ -28,6 +27,7 @@ import {
   ScanLine,
   MoveUpRight,
   Upload,
+  Images as ImagesIcon,
 } from "lucide-react";
 import {
   agents,
@@ -38,8 +38,11 @@ import {
 } from "@/lib/scenario";
 import { useInspection, WorkflowEvent, Snapshot } from "@/lib/client-store";
 import { downloadReport } from "@/lib/export-report";
-import { propertyDataset, DATASET_ID } from "@/lib/property-dataset";
-import { PhotoReviewCard, SourceImageDetails } from "@/components/photo-review";
+import { propertyDataset as defaultDataset, getPropertyDataset, DATASET_ID } from "@/lib/dataset-registry";
+import { PhotoReviewCard } from "@/components/photo-review";
+const SourceGallery = dynamic(() => import("@/components/source-gallery"), {
+  ssr: false,
+});
 import {
   releaseCustomProperty,
   type CustomProperty,
@@ -72,12 +75,27 @@ const icons = {
 
 export default function Home() {
   const s = useInspection();
+  const propertyDataset = getPropertyDataset(s.datasetId || DATASET_ID) || defaultDataset;
   const stream = useRef<EventSource | null>(null);
   const dialogRef = useRef<HTMLElement | null>(null);
   const [tab, setTab] = useState<"team" | "findings">("team");
   const [modal, setModal] = useState<
-    "report" | "integration" | "agent" | "property" | "sources" | null
+    "report" | "integration" | "agent" | "property" | "gallery" | null
   >(null);
+  const modalTrigger = useRef<HTMLElement | null>(null);
+  const openModal = useCallback(
+    (value: "report" | "integration" | "agent" | "property" | "gallery") => {
+      modalTrigger.current =
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null;
+      setModal(value);
+    },
+    [],
+  );
+  const closeModal = useCallback(() => {
+    setModal(null);
+  }, []);
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [dismissedPhoto, setDismissedPhoto] = useState<string | null>(null);
   const [customProperty, setCustomProperty] = useState<CustomProperty | null>(
@@ -169,10 +187,13 @@ export default function Home() {
       });
   }, [s.events, cinematic, s.status]);
   useEffect(() => {
-    if (!modal || modal === "property") return;
-    const previous = document.activeElement as HTMLElement | null;
+    if (!modal) {
+      if (modalTrigger.current?.isConnected) modalTrigger.current.focus();
+      modalTrigger.current = null;
+      return;
+    }
+    if (modal === "property" || modal === "gallery") return;
     dialogRef.current?.querySelector<HTMLElement>("button")?.focus();
-    return () => previous?.focus();
   }, [modal]);
   const restoreDemo = () => {
     s.reset();
@@ -228,7 +249,7 @@ export default function Home() {
       });
     } catch (e) {
       setNotice(e instanceof Error ? e.message : "Inspection could not start");
-      if (s.mode === "live") setModal("integration");
+      if (s.mode === "live") openModal("integration");
     } finally {
       setStarting(false);
     }
@@ -240,7 +261,7 @@ export default function Home() {
       cameraMode: "follow",
       focusRoom: null,
     });
-    setModal("agent");
+    openModal("agent");
   };
   const selectFinding = (id: string) => {
     const f = s.findings.find((f) => f.id === id);
@@ -294,8 +315,6 @@ export default function Home() {
   const sourcePhotos = referencePhotos.map(
     (p) => s.evidence.find((e) => e.id === p.id) || p,
   );
-  const sourceItems = [planEvidence, ...sourcePhotos];
-  const sourceItem = sourceItems.find((p) => p.id === selectedSource);
   const currentPhotoEvent = s.events.findLast(
     (e) => e.type === "photo.review.started",
   );
@@ -307,9 +326,9 @@ export default function Home() {
   const currentObservation = s.photoObservations.findLast(
     (o) => o.evidenceId === currentPhotoId,
   );
-  const openSource = (id: string | null) => {
+  const openGallery = (id: string | null) => {
     setSelectedSource(id);
-    setModal("sources");
+    openModal("gallery");
   };
   const selectedFinding = s.findings.find((f) => f.id === s.selectedFinding);
   const selectedAgent = agents.find((a) => a.id === s.selectedAgent);
@@ -361,12 +380,20 @@ export default function Home() {
           <span>WORKSPACE</span>
           <ChevronDown size={13} />
           <i />
-          Willow House <span className="property-count">01</span>
+          {propertyDataset.name} <span className="property-count">01</span>
         </div>
         <div className="top-actions">
           <button
+            className="gallery-button"
+            onClick={() => openGallery(null)}
+            aria-label="Open gallery"
+          >
+            <ImagesIcon size={17} />
+            <span>Gallery</span>
+          </button>
+          <button
             className="import-button"
-            onClick={() => setModal("property")}
+            onClick={() => openModal("property")}
             aria-label="Import property"
             title="Import floor plan and photos"
             disabled={running}
@@ -377,7 +404,7 @@ export default function Home() {
           <button
             className="integration-pill"
             onClick={() =>
-              customProperty ? setModal("property") : setModal("integration")
+              customProperty ? openModal("property") : openModal("integration")
             }
           >
             <span className={s.mode === "live" ? "dot live" : "dot"} />
@@ -393,7 +420,7 @@ export default function Home() {
           <button
             className="report-nav"
             disabled={!complete}
-            onClick={() => setModal("report")}
+            onClick={() => openModal("report")}
           >
             <FileText size={15} /> Inspection report <ArrowUpRight size={14} />
           </button>
@@ -402,7 +429,7 @@ export default function Home() {
       </header>
       <main className="world" id="property-world" inert={!!modal}>
         <PropertyScene
-          propertyId="farnsworth"
+          propertyId={propertyDataset.id === "openhouse-webster" ? "webster" : "farnsworth"}
           agents={s.agents}
           handoff={customProperty ? undefined : handoff}
           customProperty={customProperty}
@@ -424,7 +451,7 @@ export default function Home() {
           {!customProperty && (
             <button
               className="property-source-button"
-              onClick={() => openSource(null)}
+              onClick={() => openGallery(planEvidence.id)}
             >
               <FileText size={12} />
               Plan &amp; photos
@@ -551,7 +578,7 @@ export default function Home() {
             </span>
             <button
               aria-label="Integration details"
-              onClick={() => setModal("integration")}
+              onClick={() => openModal("integration")}
             >
               <ArrowUpRight size={13} />
             </button>
@@ -669,13 +696,13 @@ export default function Home() {
               observation={currentObservation}
               mode={s.mode}
               onClose={() => setDismissedPhoto(currentPhotoEvent?.id || null)}
-              onOpen={() => openSource(currentPhoto.id)}
+              onOpen={() => openGallery(currentPhoto.id)}
             />
           )}
         {complete && (
           <button
             className="completion-toast"
-            onClick={() => setModal("report")}
+            onClick={() => openModal("report")}
           >
             <div className="score-mini">{s.score}</div>
             <div>
@@ -766,7 +793,7 @@ export default function Home() {
               customProperty
                 ? restoreDemo
                 : complete
-                  ? () => setModal("report")
+                  ? () => openModal("report")
                   : start
             }
             disabled={running || starting}
@@ -873,13 +900,18 @@ export default function Home() {
         </div>
       )}
       {modal === "property" && (
-        <PropertyImport
-          onApply={applyProperty}
-          onClose={() => setModal(null)}
+        <PropertyImport onApply={applyProperty} onClose={closeModal} />
+      )}
+      {modal === "gallery" && (
+        <SourceGallery
+          items={[...sourcePhotos, planEvidence]}
+          observations={s.photoObservations}
+          initialId={selectedSource}
+          onClose={closeModal}
         />
       )}
-      {modal && modal !== "property" && (
-        <div className="modal-backdrop" onClick={() => setModal(null)}>
+      {modal && modal !== "property" && modal !== "gallery" && (
+        <div className="modal-backdrop" onClick={closeModal}>
           <section
             ref={dialogRef}
             role="dialog"
@@ -889,14 +921,12 @@ export default function Home() {
                 ? "Inspection report"
                 : modal === "agent"
                   ? "Agent details"
-                  : modal === "sources"
-                    ? "Property sources"
-                    : "Execution mode"
+                  : "Execution mode"
             }
             onKeyDown={(e) => {
               if (e.key === "Escape") {
                 e.preventDefault();
-                setModal(null);
+                closeModal();
               }
               if (e.key !== "Tab") return;
               const items = Array.from(
@@ -920,65 +950,10 @@ export default function Home() {
             <button
               className="close-button"
               aria-label="Close dialog"
-              onClick={() => setModal(null)}
+              onClick={closeModal}
             >
               <X size={20} />
             </button>
-            {modal === "sources" &&
-              (sourceItem ? (
-                <>
-                  <button
-                    className="source-back"
-                    onClick={() => setSelectedSource(null)}
-                  >
-                    All sources
-                  </button>
-                  <SourceImageDetails
-                    evidence={sourceItem}
-                    observation={s.photoObservations.findLast(
-                      (o) => o.evidenceId === sourceItem.id,
-                    )}
-                  />
-                </>
-              ) : (
-                <>
-                  <h2>Plan &amp; photos</h2>
-                  <p className="source-attribution">
-                    {propertyDataset.name}, {propertyDataset.location}. Archival
-                    sources from one house. The inspection incidents are
-                    synthetic.
-                  </p>
-                  <div className="source-gallery">
-                    {sourceItems.map((item) => (
-                      <button
-                        key={item.id}
-                        className={
-                          item.id === planEvidence.id ? "source-plan" : ""
-                        }
-                        onClick={() => setSelectedSource(item.id)}
-                      >
-                        <Image
-                          unoptimized
-                          src={item.photoUrl!}
-                          alt={item.sourceName}
-                          width={350}
-                          height={220}
-                        />
-                        <span>{item.sourceName}</span>
-                      </button>
-                    ))}
-                  </div>
-                  <p className="source-attribution">{propertyDataset.credit}</p>
-                  <a
-                    className="source-record-link"
-                    href={propertyDataset.sourceUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Survey record <ArrowUpRight size={14} />
-                  </a>
-                </>
-              ))}
             {modal === "integration" && (
               <>
                 <div className="modal-icon">
@@ -1065,7 +1040,7 @@ export default function Home() {
                     Official product docs ↗
                   </a>
                 </p>
-                <button className="primary-wide" onClick={() => setModal(null)}>
+                <button className="primary-wide" onClick={closeModal}>
                   Back to the apartment <ArrowRight size={16} />
                 </button>
               </>
@@ -1145,15 +1120,15 @@ export default function Home() {
                       ? "This is a deterministic example."
                       : "Events originate from authenticated backend tasks."}
                 </p>
-                <button className="primary-wide" onClick={() => setModal(null)}>
-                  Follow {selectedAgent.name} in the apartment <Eye size={16} />
+                <button className="primary-wide" onClick={closeModal}>
+                  Follow {selectedAgent.name} <Eye size={16} />
                 </button>
               </>
             )}
             {modal === "report" && (
               <>
                 <div className="report-kicker">
-                  <span className="eyebrow">Farnsworth House / inspection</span>
+                  <span className="eyebrow">{s.propertyName || propertyDataset.name} / inspection</span>
                   <span className="synthetic-label">
                     {s.mode.toUpperCase()} · SYNTHETIC INCIDENTS
                   </span>

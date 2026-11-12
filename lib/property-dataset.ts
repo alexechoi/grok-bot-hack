@@ -14,7 +14,7 @@ export type DatasetPhoto = {
   rightsUrl: string;
   license: string;
   photographer: string;
-  capturedAt: string;
+  capturedAt?: string;
   credit: string;
   sourceWidth: number;
   sourceHeight: number;
