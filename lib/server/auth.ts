@@ -10,6 +10,8 @@ export function constantEqual(a: string, b: string) {
 function sessionKey() {
   if (process.env.CARETAKR_SESSION_SECRET)
     return process.env.CARETAKR_SESSION_SECRET;
+  if (process.env.NODE_ENV === "production" || process.env.NETLIFY === "true")
+    throw new Error("SESSION_NOT_CONFIGURED");
   mkdirSync(secretsDir, { recursive: true, mode: 0o700 });
   const path = resolve(secretsDir, "session-key");
   try {
@@ -53,6 +55,11 @@ function validSessionCookie(request: Request, name: string, scope: string) {
     ?.slice(name.length + 1);
   if (!cookie) return false;
   const [data, sig] = cookie.split(".");
+  if (
+    (process.env.NODE_ENV === "production" || process.env.NETLIFY === "true") &&
+    !process.env.CARETAKR_SESSION_SECRET
+  )
+    return false;
   if (!data || !sig) return false;
   if (
     !constantEqual(
@@ -132,23 +139,27 @@ export function apiError(error: unknown) {
     "LIVE_NOT_CONFIGURED",
     "RUN_ALREADY_ACTIVE",
     "RATE_LIMITED",
+    "SESSION_NOT_CONFIGURED",
+    "WORKSPACE_NOT_CONFIGURED",
   ];
   const safe = allowed.includes(message) ? message : "REQUEST_FAILED";
   return Response.json(
     { error: safe },
     {
       status:
-        safe === "AUTH_REQUIRED"
-          ? 401
-          : safe === "ORIGIN_REJECTED"
-            ? 403
-            : safe === "NOT_FOUND"
-              ? 404
-              : safe === "BODY_TOO_LARGE"
-                ? 413
-                : safe === "RATE_LIMITED"
-                  ? 429
-                  : 400,
+        safe === "SESSION_NOT_CONFIGURED" || safe === "WORKSPACE_NOT_CONFIGURED"
+          ? 503
+          : safe === "AUTH_REQUIRED"
+            ? 401
+            : safe === "ORIGIN_REJECTED"
+              ? 403
+              : safe === "NOT_FOUND"
+                ? 404
+                : safe === "BODY_TOO_LARGE"
+                  ? 413
+                  : safe === "RATE_LIMITED"
+                    ? 429
+                    : 400,
     },
   );
 }

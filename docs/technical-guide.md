@@ -90,14 +90,14 @@ Consumption deviation is calculated in code: baseline **1.2 kWh**, observed **4.
 
 Next.js 16, React 19, TypeScript, React Three Fiber, Drei, Three.js, Zustand and Zod. Backend workflow state is authoritative; the browser receives an initial snapshot and subsequent SSE events. Validated events determine character task/location, issue markers and completion. The scene is an illustrative view of evidence-processing work, not a claim of physical robotic inspection.
 
-Run **one persistent Node process**:
+For a standalone local deployment, run **one persistent Node process**:
 
 ```sh
 npm run build
 npm start
 ```
 
-The hackathon backend keeps bounded inspections and event history in process memory. Restarting loses inspections. Multiple replicas or ephemeral/serverless request execution require a durable shared event store and worker; do not assume background tasks or SSE survive request freezing. Grok Bot MCP additionally needs HTTPS and `CARETAKR_PUBLIC_URL` set to its reachable origin.
+Local Next.js runs keep bounded inspection state in process memory. The Netlify deployment uses native API and Background Functions: the worker awaits real Grok Bot execution, writes ordered snapshots and immutable events to strongly consistent Blobs storage, and observes a durable cancellation flag. API reads and reconnecting SSE streams work across instances. Production and preview namespaces are isolated by the native Function context. An immutable claim prevents duplicate Bot dispatch on background retries; expired workers are closed without replaying their tasks. See [hosted setup](hosted-setup.md) for browser access, environment settings and verification. Grok Bot MCP additionally needs HTTPS and `CARETAKR_PUBLIC_URL` set to its reachable origin.
 
 Mutation endpoints require scoped authentication. Live snapshots/streams require operator access. MCP credentials bind calls to roles; schema and reference validation reject forged identities, unknown evidence, invalid dependencies and actions without findings. Same-account Bots share Grok Bot's account-level access; per-role connector credentials do not create isolation between those Bots.
 

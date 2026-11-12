@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     attempts.set(ip, entry);
     if (entry.count > 10) throw new Error("RATE_LIMITED");
     if (attempts.size > 1000) attempts.clear();
-    const { token, mode } = await jsonBody(request, 4096);
+    const { token, mode, password } = await jsonBody(request, 4096);
     if (mode === "demo") {
       if (
         request.headers.get("origin") !== new URL(request.url).origin &&
@@ -37,13 +37,32 @@ export async function POST(request: Request) {
         },
       );
     }
-    const expected = process.env.CARETAKR_OPERATOR_TOKEN;
-    if (
-      !expected ||
-      typeof token !== "string" ||
-      !constantEqual(token, expected)
-    )
-      throw new Error("AUTH_REQUIRED");
+    if (password !== undefined) {
+      const origin = request.headers.get("origin");
+      if (
+        !origin ||
+        (origin !== new URL(request.url).origin &&
+          origin !== process.env.CARETAKR_PUBLIC_URL)
+      )
+        throw new Error("ORIGIN_REJECTED");
+      if (request.headers.get("sec-fetch-site") === "cross-site")
+        throw new Error("ORIGIN_REJECTED");
+      const expectedPassword = process.env.CARETAKR_WORKSPACE_PASSWORD;
+      if (!expectedPassword) throw new Error("WORKSPACE_NOT_CONFIGURED");
+      if (
+        typeof password !== "string" ||
+        !constantEqual(password, expectedPassword)
+      )
+        throw new Error("AUTH_REQUIRED");
+    } else {
+      const expected = process.env.CARETAKR_OPERATOR_TOKEN;
+      if (
+        !expected ||
+        typeof token !== "string" ||
+        !constantEqual(token, expected)
+      )
+        throw new Error("AUTH_REQUIRED");
+    }
     return Response.json(
       { authenticated: true },
       {

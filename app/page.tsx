@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   ArrowUpRight,
   ArrowRight,
@@ -41,6 +41,7 @@ import { downloadReport } from "@/lib/export-report";
 import { propertyDataset as defaultDataset, getPropertyDataset, DATASET_ID } from "@/lib/dataset-registry";
 import { PhotoReviewCard } from "@/components/photo-review";
 import "@/components/property-level.css";
+import "@/components/workspace-login.css";
 import "@/components/inspection-report.css";
 const SourceGallery = dynamic(() => import("@/components/source-gallery"), {
   ssr: false,
@@ -68,6 +69,9 @@ type Integration = {
   sdkVersion: string;
   roundTripVerified: boolean;
 };
+const subscribeLocation = () => () => {};
+const localWorkspaceSnapshot = () => ["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname);
+const serverWorkspaceSnapshot = () => false;
 const icons = {
   inspector: ScanLine,
   energy: Zap,
@@ -113,14 +117,33 @@ export default function Home() {
   const [cinematic, setCinematic] = useState(true);
   const [integration, setIntegration] = useState<Integration | null>(null);
   const [notice, setNotice] = useState("");
+  const [workspacePassword, setWorkspacePassword] = useState("");
+  const [loginPending, setLoginPending] = useState(false);
+  const [loginError, setLoginError] = useState("");
+  const localWorkspace = useSyncExternalStore(subscribeLocation, localWorkspaceSnapshot, serverWorkspaceSnapshot);
+  const signInWorkspace = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setLoginPending(true); setLoginError("");
+    try {
+      const response = await fetch("/api/session", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({password:workspacePassword})});
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error === "RATE_LIMITED" ? "Too many attempts. Try again in a minute." : result.error === "AUTH_REQUIRED" ? "That passcode is incorrect. Try again." : result.error === "WORKSPACE_NOT_CONFIGURED" || result.error === "SESSION_NOT_CONFIGURED" ? "Workspace sign-in needs server setup. Contact the workspace owner." : "Could not sign in. Please try again.");
+      setWorkspacePassword("");
+      await refreshIntegration();
+      chooseMode("live");
+    } catch (error) {setLoginError(error instanceof Error ? error.message : "Could not sign in.");}
+    finally {setLoginPending(false);}
+  };
+
   const refreshIntegration = () =>
     fetch("/api/integration/status")
       .then((r) => r.json())
       .then((data) => {
         setIntegration(data);
         const url = new URL(window.location.href);
-        if (data.authenticated && url.searchParams.get("mode") === "live") {
+        if (url.searchParams.get("mode") === "live") {
           useInspection.setState({ mode: "live" });
+          if (!data.authenticated) openModal("integration");
           url.searchParams.delete("mode");
           window.history.replaceState(null, "", url.pathname + url.search);
         }
@@ -1068,27 +1091,23 @@ export default function Home() {
                 </div>
                 {!!integration?.missing?.length && (
                   <div className="setup-note">
-                    Server configuration needed:{" "}
-                    {integration.missing.join(", ")}. See{" "}
-                    <code>docs/grok-integration.md</code>. Run{" "}
-                    <code>npm run grok:login</code> to authorise the unofficial
-                    desktop SDK.
+                    {localWorkspace ? <>Server configuration needed: {integration.missing.join(", ")}. See <code>docs/grok-integration.md</code>.</> : "The workspace owner needs to finish connecting the Grok Bot team."}
                   </div>
                 )}
                 {!integration?.authenticated && (
                   <div className="live-unlock">
-                    <h3>Unlock Live</h3>
-                    <p>
-                      Open the local workspace link printed when you start the
-                      app.
-                    </p>
-                    <code>npm run unlock:live</code>
-                    <button
-                      type="button"
-                      onClick={() => void refreshIntegration()}
-                    >
-                      Refresh connection
-                    </button>
+                    <h3>{localWorkspace ? "Unlock Live" : "Sign in to the workspace"}</h3>
+                    {localWorkspace ? <>
+                      <p>Open the local workspace link printed when you start the app.</p>
+                      <code>npm run unlock:live</code>
+                      <button type="button" onClick={() => void refreshIntegration()}>Refresh connection</button>
+                    </> : <form className="workspace-login" onSubmit={signInWorkspace}>
+                      <p>Enter the private workspace passcode to run the Grok Bot team.</p>
+                      <label htmlFor="workspace-passcode">Workspace passcode</label>
+                      <input id="workspace-passcode" name="password" type="password" autoComplete="current-password" required maxLength={512} value={workspacePassword} onChange={event => setWorkspacePassword(event.target.value)} aria-describedby={loginError ? "workspace-login-error" : undefined} aria-invalid={!!loginError}/>
+                      {loginError && <p id="workspace-login-error" role="alert">{loginError}</p>}
+                      <button type="submit" disabled={loginPending || !workspacePassword}>{loginPending ? "Signing in…" : "Sign in"}</button>
+                    </form>}
                   </div>
                 )}
                 <p className="subtle-text">

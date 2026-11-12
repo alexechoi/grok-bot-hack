@@ -1,0 +1,47 @@
+.workspace-login {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.workspace-login p {
+  margin: 0 0 4px;
+}
+.workspace-login label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #414b58;
+}
+.workspace-login input {
+  width: 100%;
+  border: 1px solid #bcc7d2;
+  border-radius: 9px;
+  background: #fff;
+  color: #202934;
+  padding: 12px;
+  font: inherit;
+  outline-offset: 3px;
+}
+.workspace-login input:focus-visible {
+  outline: 2px solid #6d90b4;
+}
+.workspace-login input[aria-invalid="true"] {
+  border-color: #a04e44;
+}
+.workspace-login [role="alert"] {
+  color: #a04e44;
+  font-size: 13px;
+}
+.live-unlock .workspace-login button {
+  margin-top: 4px;
+  padding: 12px;
+  border-radius: 9px;
+  background: #b6cce0;
+  color: #23374c;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+}
+.workspace-login button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}

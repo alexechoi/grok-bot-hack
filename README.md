@@ -85,4 +85,4 @@ Node backend → validated events → SSE → interactive 3D scene
 
 [Setup, architecture & checks](docs/technical-guide.md) · [Live integration & security](docs/grok-integration.md) · [Environment settings](.env.example) · [Attribution](docs/reference-patterns.md) · [License](LICENSE)
 
-Run one persistent Node process; inspection state is held in memory. Keep `.env.local` and `.caretakr/` private. Grok credentials stay on the server.
+Local development uses one Node process. Hosted Netlify inspections run in Background Functions with durable snapshots and events in private Blobs storage. Website visitors unlock Live in the browser; terminal unlock links are only for localhost. Keep `.env.local` and `.caretakr/` private. [Hosted setup](docs/hosted-setup.md).
