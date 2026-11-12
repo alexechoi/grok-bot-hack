@@ -8,7 +8,7 @@ Turn property evidence into prioritised maintenance actions—then watch the tea
 
 **Grok Bot Real Estate Hackathon London · Track 4: Asset and property management**
 
-[Try the demo](#try-it-in-60-seconds) · [Meet the team](#four-specialists-one-shared-mission) · [Grok Bot integration](docs/grok-integration.md)
+[**Launch live demo ↗**](https://caretakr.alexchoi.xyz) · [Run locally](#try-it-in-60-seconds) · [Meet the team](#four-specialists-one-shared-mission) · [Grok Bot integration](docs/grok-integration.md)
 
 ![Caretakr illustrated overview: four specialists turn property evidence into findings, work orders and a report.](docs/assets/caretakr-overview.svg)
 
@@ -41,6 +41,10 @@ flowchart LR
 ```
 
 ## Try it in 60 seconds
+
+**[Open the deployed demo →](https://caretakr.alexchoi.xyz)** Keep **Demo** selected and click **Inspect property**. No Grok Bot account needed.
+
+Prefer to run locally?
 
 Requires **Node.js 22.13+** and a browser with WebGL.
 
