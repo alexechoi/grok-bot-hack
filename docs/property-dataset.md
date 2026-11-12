@@ -2,9 +2,18 @@
 
 Caretakr's active example is Webster House, from the [Openhouse-3D Webster example](https://github.com/yunfanye/openhouse-3d/tree/b6e5d9b40b9f1d2c12775d8fd5e6a370897cb907/houses/webster). The user selected it for this hackathon reference demo. Five matching photographs show its living room, kitchen, main-floor bedroom, bathroom, and entry/staircase; image 31 supplies the same house's floor plan. Raw image URLs are pinned to commit `b6e5d9b40b9f1d2c12775d8fd5e6a370897cb907`; no Webster image files are bundled into this repository.
 
-`lib/webster-dataset.ts` retains per-image source URLs, original Redfin URLs, exact-byte SHA-256 values and dimensions. All five selected photographs are 1280 × 853 pixels; the plan is 835 × 1080. Photographer and capture dates are not identified in the source manifest. The plan credits Bluesky Media / bsm.photos. Original image rights are retained; Openhouse-3D's MIT code license does not relicense the images. The manifest records `rightsVerified: false` and `referenceUseAuthorized: true` separately.
+`lib/webster-dataset.ts` retains per-image source URLs, original Redfin URLs, exact-byte SHA-256 values and dimensions. All five selected photographs are 1280 × 853 pixels; the plan is 835 × 1080. Photographer and capture dates are not identified in the source manifest. The plan credits Blu Skye Media / bsm.photos. Original image rights are retained; Openhouse-3D's MIT code license does not relicense the images. The manifest records `rightsVerified: false` and `referenceUseAuthorized: true` separately.
 
-Webster's `plan.py` supplies reconstruction room coordinates and distinguishes inferred hidden geometry. Those coordinates support an illustrative cutaway; they do not establish present-day property condition. Synthetic inspection incidents remain separate from actual source photographs.
+Webster's main-floor outline, room relationships and openings are traced directly from `31.jpg`, including the compact offset stair flights, porch and exterior notches. The source image's main-floor bounds are x=95–393, y=418–938 pixels. A uniform display scale of approximately 0.0338666667 metres per pixel uses a 14-foot/126-pixel reference width. This produces an approximately 10.093 × 17.611 metre rendering footprint; these are display estimates, not surveyed dimensions. The source drawing itself describes its dimensions as approximate, and its printed room labels do not consistently match image proportions. The earlier upstream `plan.py` footprint of 11.5 × 18.2 metres is not used to claim the corrected scene's size. Vertical heights and furniture remain illustrative. Synthetic inspection incidents remain separate from actual source photographs.
+
+| Before | After | Why |
+| --- | --- | --- |
+| Long straight central stair from upstream reconstruction | Compact offset flights traced from the entry junction | Matches the source floor plan's circulation |
+| Simplified rectangular main-floor edges | Bathroom notch, rear-bedroom closet projection, family closet and front porch retained | Preserves the same home's recognisable silhouette |
+| Main-floor-only preview | Separate traced upper level with deck, two bathrooms, bedrooms and wardrobes | Allows direct comparison with both source-plan panels |
+| Upper closet divider and filled wardrobe notch | One accessible rear-bedroom closet and the source exterior notch | Removes geometry absent from the reference drawing |
+
+Independent desktop and mobile browser checks verified both levels and top views, image-gallery access, custom-upload source isolation and the complete synthetic inspection/report flow. Upper-level inspection findings and agents are not invented; its preview remains uninspected.
 
 ## Public-domain fallback
 

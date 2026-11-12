@@ -68,6 +68,7 @@ export function SourceGallery({
         ? dataset.floorplan
         : undefined));
   const title = record?.title || item?.sourceName || "Property gallery";
+  const fullImageUrl = safeUrl(record?.imageUrl || item?.imageUrl || item?.photoUrl, true);
   const photoObservations = item
     ? observations.filter((observation) => observation.evidenceId === item.id)
     : [];
@@ -210,13 +211,15 @@ export function SourceGallery({
               <p>
                 {record && "description" in record
                   ? record.description
-                  : item?.content}
+                  : record
+                    ? "Source floor plan for this property."
+                    : item?.content}
               </p>
             </div>
-            {safeUrl(item?.imageUrl || item?.photoUrl, true) && (
+            {fullImageUrl && (
               <a
                 className="ct-gallery-original"
-                href={safeUrl(item?.imageUrl || item?.photoUrl, true)}
+                href={fullImageUrl}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -270,7 +273,7 @@ export function SourceGallery({
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      Archive record <ExternalLink size={13} />
+                      Source record <ExternalLink size={13} />
                     </a>
                   )}
                   {record && (

@@ -38,6 +38,7 @@ import WebsterHouse, {
   websterOverview,
   websterRoute,
 } from "./webster-house";
+import WebsterUpper, { websterUpperOverview } from "./webster-upper";
 import type { CustomProperty } from "@/lib/property-source";
 
 type Point = [number, number, number];
@@ -56,6 +57,7 @@ type SceneFinding = {
 };
 export type PropertySceneProps = {
   propertyId?: "webster" | "farnsworth" | "willow";
+  websterLevel?: "main" | "upper";
   customProperty?: CustomProperty | null;
   agents: SceneAgent[];
   findings: SceneFinding[];
@@ -1740,6 +1742,7 @@ function EnergyZone() {
 }
 function CameraRig({
   propertyId,
+  websterLevel,
   customProperty,
   cameraMode,
   focusRoom,
@@ -1748,6 +1751,7 @@ function CameraRig({
   positions,
 }: {
   propertyId?: "webster" | "farnsworth" | "willow";
+  websterLevel?: "main" | "upper";
   customProperty?: CustomProperty | null;
   cameraMode: PropertySceneProps["cameraMode"];
   focusRoom: string | null;
@@ -1756,6 +1760,7 @@ function CameraRig({
   handoff?: { id: string; from: string; to: string };
   positions: Map<string, Vector3>;
 }) {
+  const overview = websterLevel === "upper" ? websterUpperOverview : websterOverview;
   const roomMap = useContext(SceneRooms);
   const reducedMotion = useContext(ReducedMotion);
   const controls = useRef<OrbitControlsType>(null),
@@ -1768,7 +1773,7 @@ function CameraRig({
     const fitWidth = customProperty
       ? customProperty.width * 0.81 + customProperty.depth * 0.59 + 3
       : propertyId === "webster"
-        ? websterOverview.width * 0.81 + websterOverview.depth * 0.59 + 3
+        ? cameraMode === "top" ? overview.width + 3 : overview.width * 0.81 + overview.depth * 0.59 + 3
         : propertyId === "farnsworth"
           ? farnsworthOverview.width * (size.width < 700 ? 0.5 : 0.81) +
             farnsworthOverview.depth * (size.width < 700 ? 0.86 : 0.59) +
@@ -1777,7 +1782,7 @@ function CameraRig({
     const fitHeight = customProperty
       ? customProperty.width * 0.35 + customProperty.depth * 0.49 + 5
       : propertyId === "webster"
-        ? websterOverview.width * 0.35 + websterOverview.depth * 0.49 + 5
+        ? cameraMode === "top" ? overview.depth + 3.5 : overview.width * 0.35 + overview.depth * 0.49 + 5
         : propertyId === "farnsworth"
           ? farnsworthOverview.width * (size.width < 700 ? 0.55 : 0.35) +
             farnsworthOverview.depth * (size.width < 700 ? 0.32 : 0.49) +
@@ -1803,9 +1808,9 @@ function CameraRig({
         ? roomMap[focusRoom].point
         : propertyId === "webster"
           ? [
-              websterOverview.centre[0] - (size.width > 900 ? 1.3 : 0),
+              overview.centre[0] - (size.width > 900 ? 1.3 : 0),
               0,
-              websterOverview.centre[2] + (size.width > 900 ? 0.9 : 0),
+              overview.centre[2] + (size.width > 900 ? 0.9 : 0),
             ]
           : propertyId === "farnsworth"
             ? [
@@ -1821,7 +1826,7 @@ function CameraRig({
       .copy(wanted.current)
       .add(
         cameraMode === "top"
-          ? new Vector3(0, 23, 0.01)
+          ? new Vector3(0, 23, 0.5)
           : propertyId === "farnsworth" && size.width < 700
             ? new Vector3(24, 26, 14)
             : new Vector3(13, 15, 18),
@@ -1842,7 +1847,7 @@ function CameraRig({
             (customProperty
               ? Math.max(customProperty.width, customProperty.depth)
               : propertyId === "webster"
-                ? Math.max(websterOverview.width, websterOverview.depth)
+                ? Math.max(overview.width, overview.depth)
                 : farnsworthOverview.width) / 14,
           ),
         )
@@ -1856,6 +1861,8 @@ function CameraRig({
     size,
     customProperty,
     propertyId,
+    websterLevel,
+    overview,
     roomMap,
   ]);
   useFrame(({ camera }, dt) => {
@@ -1880,8 +1887,13 @@ function CameraRig({
         camera.position.distanceTo(desiredPosition.current) < 0.025 &&
         Math.abs(cam.zoom - desiredZoom.current) < 0.025 &&
         controls.current.target.distanceTo(wanted.current) < 0.025
-      )
+      ) {
+        camera.position.copy(desiredPosition.current);
+        controls.current.target.copy(wanted.current);
+        cam.zoom = desiredZoom.current;
+        cam.updateProjectionMatrix();
         transition.current = false;
+      }
       controls.current.update();
     }
   });
@@ -1904,6 +1916,7 @@ function CameraRig({
   );
 }
 function World(props: PropertySceneProps) {
+  const upper = !props.customProperty && props.propertyId === "webster" && props.websterLevel === "upper";
   const reducedMotion = useContext(ReducedMotion);
   const positions = useMemo(() => new Map<string, Vector3>(), []);
   return (
@@ -1981,7 +1994,7 @@ function World(props: PropertySceneProps) {
           onRoomSelect={props.onRoomSelect}
         />
       ) : props.propertyId === "webster" ? (
-        <WebsterHouse onRoomSelect={props.onRoomSelect} />
+        upper ? <WebsterUpper /> : <WebsterHouse onRoomSelect={props.onRoomSelect} />
       ) : props.propertyId === "farnsworth" ? (
         <FarnsworthHouse onRoomSelect={props.onRoomSelect} />
       ) : (
@@ -2056,7 +2069,7 @@ function World(props: PropertySceneProps) {
               />
             );
           })
-        : props.agents.map((agent) => (
+        : !upper && props.agents.map((agent) => (
             <Robot
               key={agent.id}
               agent={agent}
@@ -2065,7 +2078,7 @@ function World(props: PropertySceneProps) {
               positions={positions}
             />
           ))}
-      {props.handoff && !props.customProperty && !reducedMotion && (
+      {props.handoff && !upper && !props.customProperty && !reducedMotion && (
         <Handoff
           key={props.handoff.id}
           handoff={props.handoff}
@@ -2076,7 +2089,7 @@ function World(props: PropertySceneProps) {
           }
         />
       )}
-      {!props.customProperty &&
+      {!props.customProperty && !upper &&
         props.findings.map((f) => (
           <FindingMarker
             key={f.id}
@@ -2084,7 +2097,7 @@ function World(props: PropertySceneProps) {
             onSelect={() => props.onFindingSelect(f.id)}
           />
         ))}
-      {!props.customProperty &&
+      {!props.customProperty && !upper &&
         props.findings.some((f) => f.category === "energy") && <EnergyZone />}
       <CameraRig {...props} positions={positions} />
     </>

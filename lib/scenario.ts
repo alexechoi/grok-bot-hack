@@ -278,9 +278,9 @@ export const rooms: Record<
   string,
   { name: string; point: [number, number, number] }
 > = {
-  living: { name: "Living room", point: [-3.3, 0, 5.8] },
-  kitchen: { name: "Kitchen", point: [3.6, 0, -0.2] },
-  bathroom: { name: "Main-floor bathroom", point: [-4.15, 0, -2.2] },
-  bedroom: { name: "Main-floor bedroom", point: [-3.3, 0, 1.1] },
-  hallway: { name: "Entry / stair circulation", point: [-0.7, 0, 6.4] },
+  living: { name: "Living room", point: [-2.6757, 0, 5.4864] },
+  kitchen: { name: "Kitchen", point: [2.0997, 0, 0.4064] },
+  bathroom: { name: "Main-floor bathroom", point: [-2.0659, 0, -2.5061] },
+  bedroom: { name: "Main-floor bedroom", point: [-2.0997, 0, 0.3387] },
+  hallway: { name: "Entry / stair circulation", point: [0, 0, 5.8251] },
 };

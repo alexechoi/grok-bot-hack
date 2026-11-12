@@ -40,6 +40,8 @@ import { useInspection, WorkflowEvent, Snapshot } from "@/lib/client-store";
 import { downloadReport } from "@/lib/export-report";
 import { propertyDataset as defaultDataset, getPropertyDataset, DATASET_ID } from "@/lib/dataset-registry";
 import { PhotoReviewCard } from "@/components/photo-review";
+import "@/components/property-level.css";
+import "@/components/inspection-report.css";
 const SourceGallery = dynamic(() => import("@/components/source-gallery"), {
   ssr: false,
 });
@@ -96,6 +98,7 @@ export default function Home() {
   const closeModal = useCallback(() => {
     setModal(null);
   }, []);
+  const [websterLevel, setWebsterLevel] = useState<"main" | "upper">("main");
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [dismissedPhoto, setDismissedPhoto] = useState<string | null>(null);
   const [customProperty, setCustomProperty] = useState<CustomProperty | null>(
@@ -129,6 +132,24 @@ export default function Home() {
     return () => stream.current?.close();
   }, []);
   useEffect(() => {
+    const id = new URL(window.location.href).searchParams.get("inspection");
+    if (!id || !/^[a-f0-9-]{36}$/i.test(id)) return;
+    const controller = new AbortController();
+    void fetch(`/api/inspections/${encodeURIComponent(id)}`, { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("This inspection is unavailable in this session.");
+        const snapshot = await response.json() as Snapshot;
+        if (controller.signal.aborted) return;
+        useInspection.setState({ inspectionId: id });
+        useInspection.getState().hydrate(snapshot);
+        const url = new URL(window.location.href);
+        url.searchParams.delete("inspection");
+        window.history.replaceState(null, "", url.pathname + url.search);
+      })
+      .catch((error) => { if (!controller.signal.aborted) setNotice(error.message); });
+    return () => controller.abort();
+  }, []);
+  useEffect(() => {
     if (!s.inspectionId) return;
     const runId = s.inspectionId;
     const isCurrent = () => useInspection.getState().inspectionId === runId;
@@ -137,7 +158,9 @@ export default function Home() {
     source.addEventListener("snapshot", (event) => {
       if (!isCurrent()) return;
       try {
-        useInspection.getState().hydrate(JSON.parse(event.data) as Snapshot);
+        const snapshot = JSON.parse(event.data) as Snapshot;
+        useInspection.getState().hydrate(snapshot);
+        if (["completed", "error", "cancelled"].includes(snapshot.status)) source.close();
       } catch {
         setNotice("Could not read inspection snapshot.");
       }
@@ -147,6 +170,7 @@ export default function Home() {
       try {
         const e = JSON.parse(event.data) as WorkflowEvent;
         useInspection.getState().apply(e);
+        if (["completed", "error", "cancelled"].includes(useInspection.getState().status)) source.close();
         if (e.type === "inspection.completed") {
           void refreshIntegration();
           useInspection.setState((current) => ({
@@ -222,6 +246,7 @@ export default function Home() {
     });
   };
   const start = async () => {
+    setWebsterLevel("main");
     setStarting(true);
     setNotice("");
     try {
@@ -255,6 +280,7 @@ export default function Home() {
     }
   };
   const selectAgent = (id: string) => {
+    setWebsterLevel("main");
     useInspection.setState({
       selectedAgent: id,
       selectedFinding: null,
@@ -264,6 +290,7 @@ export default function Home() {
     openModal("agent");
   };
   const selectFinding = (id: string) => {
+    setWebsterLevel("main");
     const f = s.findings.find((f) => f.id === id);
     useInspection.setState({
       selectedFinding: id,
@@ -301,8 +328,10 @@ export default function Home() {
     id: propertyDataset.floorplan.id,
     roomId: "living",
     type: "photo",
-    sourceName: "Measured floor plan",
-    content: propertyDataset.dimensions.source,
+    sourceName: "Floor plan",
+    content: propertyDataset.id === "openhouse-webster"
+      ? "Main and upper levels, with detached outbuildings shown separately. Room dimensions are approximate. Furnishings in the 3D view are staged."
+      : "Measured source floor plan for the reference property.",
     synthetic: false,
     scope: "reference-context",
     capturedAt: propertyDataset.floorplan.capturedAt,
@@ -315,6 +344,20 @@ export default function Home() {
   const sourcePhotos = referencePhotos.map(
     (p) => s.evidence.find((e) => e.id === p.id) || p,
   );
+  const galleryItems: Evidence[] = customProperty
+    ? [
+        ...(customProperty.floorplanUrl ? [{
+          id: "uploaded-plan", roomId: "living", type: "photo" as const,
+          sourceName: "Uploaded floor plan", content: "Your floor plan. Stored on this device; not analysed by Grok Bot.",
+          synthetic: false, scope: "reference-context" as const, photoUrl: customProperty.floorplanUrl,
+        }] : []),
+        ...customProperty.rooms.filter((room) => room.photoUrl).map((room) => ({
+          id: `uploaded-${room.id}`, roomId: room.id, type: "photo" as const,
+          sourceName: room.name, content: "Your room reference. Stored on this device; not analysed by Grok Bot.",
+          synthetic: false, scope: "reference-context" as const, photoUrl: room.photoUrl,
+        })),
+      ]
+    : [...sourcePhotos, planEvidence];
   const currentPhotoEvent = s.events.findLast(
     (e) => e.type === "photo.review.started",
   );
@@ -334,6 +377,7 @@ export default function Home() {
   const selectedAgent = agents.find((a) => a.id === s.selectedAgent);
   const agentState = s.agents.find((a) => a.id === s.selectedAgent);
   const complete = s.status === "completed";
+  const upperPreview = !customProperty && propertyDataset.id === "openhouse-webster" && websterLevel === "upper";
   const running = s.status === "running";
   const progress = complete
     ? 100
@@ -344,6 +388,9 @@ export default function Home() {
         : running
           ? 12
           : 0;
+  const workOrderFor = (finding: (typeof s.findings)[number]) => s.workOrders.find((order) => order.findingIds.includes(finding.id));
+  const priorityFor = (finding: (typeof s.findings)[number]) => workOrderFor(finding)?.priority || finding.severity;
+  const highPriorityOrders = s.workOrders.filter((order) => ["high", "critical"].includes(order.priority)).length;
   const exportData = {
     id: s.inspectionId,
     mode: s.mode,
@@ -430,6 +477,7 @@ export default function Home() {
       <main className="world" id="property-world" inert={!!modal}>
         <PropertyScene
           propertyId={propertyDataset.id === "openhouse-webster" ? "webster" : "farnsworth"}
+          websterLevel={websterLevel}
           agents={s.agents}
           handoff={customProperty ? undefined : handoff}
           customProperty={customProperty}
@@ -448,6 +496,20 @@ export default function Home() {
           <h1>
             {customProperty?.name || s.propertyName || propertyDataset.name}
           </h1>
+          {!customProperty && propertyDataset.id === "openhouse-webster" && (
+            <div className="level-switch" role="group" aria-label="Building level">
+              {(["main", "upper"] as const).map((level) => (
+                <button key={level} aria-pressed={websterLevel === level}
+                  disabled={running && level !== "main"}
+                  onClick={() => {
+                    setWebsterLevel(level);
+                    useInspection.setState((current) => ({ cameraMode: "orbit", focusRoom: null, resetKey: current.resetKey + 1 }));
+                  }}>
+                  {level === "main" ? "Main level" : "Upper level"}
+                </button>
+              ))}
+            </div>
+          )}
           {!customProperty && (
             <button
               className="property-source-button"
@@ -460,7 +522,7 @@ export default function Home() {
         </div>
         <div className="scene-badge">
           <span className={running ? "dot live pulse" : "dot"} />
-          {customProperty
+          {upperPreview || customProperty
             ? "UNINSPECTED"
             : running
               ? "INSPECTING"
@@ -468,7 +530,7 @@ export default function Home() {
                 ? "COMPLETE"
                 : "READY"}
           <span className="scene-badge-separator" />{" "}
-          {customProperty
+          {upperPreview ? "PLAN RECONSTRUCTION" : customProperty
             ? customProperty.source === "gaussian-splat"
               ? "UPLOADED SPLAT"
               : "TRACED PLAN"
@@ -881,7 +943,7 @@ export default function Home() {
                   </summary>
                   <div>
                     <span className="synthetic-label">
-                      SYNTHETIC {e.type.toUpperCase()}
+                      {e.synthetic ? "SYNTHETIC" : "REFERENCE"} {e.type.toUpperCase()}
                     </span>
                     <p>{e.content}</p>
                     <small>
@@ -904,8 +966,8 @@ export default function Home() {
       )}
       {modal === "gallery" && (
         <SourceGallery
-          items={[...sourcePhotos, planEvidence]}
-          observations={s.photoObservations}
+          items={galleryItems}
+          observations={customProperty ? [] : s.photoObservations}
           initialId={selectedSource}
           onClose={closeModal}
         />
@@ -944,7 +1006,7 @@ export default function Home() {
                 first?.focus();
               }
             }}
-            className={`modal ${modal === "report" ? "report-modal" : ""}`}
+            className={`modal ${modal === "report" ? "report-modal ct-report" : ""}`}
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -1135,18 +1197,8 @@ export default function Home() {
                 </div>
                 <div className="report-title">
                   <div>
-                    <div className="report-check">
-                      <Check size={24} />
-                    </div>
-                    <h2>
-                      Inspection
-                      <br />
-                      complete.
-                    </h2>
-                    <p>
-                      Findings and recommended actions.
-                      <br />
-                    </p>
+                    <h2>Inspection report</h2>
+                    <p>{propertyDataset.name}{propertyDataset.id === "openhouse-webster" ? " · Main level" : ""}</p>
                   </div>
                   <div className="health-score">
                     <svg viewBox="0 0 120 120">
@@ -1171,12 +1223,7 @@ export default function Home() {
                   </div>
                   <div>
                     <b>
-                      {s.findings
-                        .filter((f) =>
-                          ["high", "critical"].includes(f.severity),
-                        )
-                        .length.toString()
-                        .padStart(2, "0")}
+                      {highPriorityOrders.toString().padStart(2, "0")}
                     </b>
                     <span>High priority</span>
                   </div>
@@ -1194,31 +1241,32 @@ export default function Home() {
                     <span>Work orders</span>
                   </div>
                 </div>
-                <p className="report-summary">{s.summary}</p>
-                <h3>Action plan</h3>
+                <div className="report-section-heading"><h3>Next steps</h3><span>{highPriorityOrders ? `${highPriorityOrders} high-priority ${highPriorityOrders === 1 ? "work order" : "work orders"}` : "No high-priority work orders"}</span></div>
                 <div className="report-findings">
                   {[...s.findings]
                     .sort(
                       (a, b) =>
                         ({ critical: 0, high: 1, medium: 2, low: 3 })[
-                          a.severity
+                          priorityFor(a)
                         ] -
-                        { critical: 0, high: 1, medium: 2, low: 3 }[b.severity],
+                        { critical: 0, high: 1, medium: 2, low: 3 }[priorityFor(b)],
                     )
                     .map((f) => (
                       <button key={f.id} onClick={() => selectFinding(f.id)}>
-                        <span className={`severity-dot ${f.severity}`} />
+                        <span className={`severity-dot ${priorityFor(f)}`} />
                         <div>
-                          <strong>{f.title}</strong>
-                          <p>
-                            {rooms[f.roomId].name} · {f.evidenceIds.join(", ")}{" "}
-                            · {f.severity} priority
-                          </p>
+                          <span className="report-action-meta">{rooms[f.roomId]?.name || f.roomId} · {priorityFor(f)} priority</span>
+                          <strong>{f.title.replace(/^synthetic scenario[\s:—-]*/i, "")}</strong>
+                          <p className="report-action-text">{f.recommendedAction.replace(/^Rating: [^.]+\.\s*/i, "")}</p>
                         </div>
                         <ArrowUpRight size={17} />
                       </button>
                     ))}
                 </div>
+                <details className="report-notes">
+                  <summary>Full agent summary <ChevronDown size={14} /></summary>
+                  <p>{s.summary}</p>
+                </details>
                 <details className="score-method">
                   <summary>
                     How is the score calculated?
@@ -1242,9 +1290,7 @@ export default function Home() {
                   </button>
                 </div>
                 <p className="subtle-text">
-                  Illustrative digital twin. No real address or inspection
-                  records. Reports include all evidence references, work orders
-                  and timestamped events.
+                  Real reference photos. Synthetic incidents. Full evidence and event record included in the export.
                 </p>
               </>
             )}

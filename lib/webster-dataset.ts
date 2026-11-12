@@ -15,7 +15,7 @@ export const websterDataset = {
   provenance:
     "Original listing photographs and a matching floor plan of the same Webster House, sourced from the pinned Openhouse-3D example. Image rights remain with their original owners; use here is a user-authorised hackathon reference demo. Photographs are not current inspection records and do not establish the synthetic incidents. Procedural geometry follows the source plan with inferred hidden dimensions and illustrative furnishings; this is not a Gaussian reconstruction.",
   credit:
-    "Openhouse-3D by Yunfan Ye and contributors; original listing photographs retain their own rights. Floor-plan credit: Bluesky Media / bsm.photos.",
+    "Openhouse-3D by Yunfan Ye and contributors; original listing photographs retain their own rights. Floor-plan credit: Blu Skye Media / bsm.photos.",
   floorplan: {
     id: "WEBSTER-PLAN-31",
     title: "Webster House floor plan",
@@ -34,10 +34,10 @@ export const websterDataset = {
     rightsUrl:
       "https://github.com/yunfanye/openhouse-3d/blob/b6e5d9b40b9f1d2c12775d8fd5e6a370897cb907/ASSET_LICENSES.md",
     license: "Original rights retained",
-    creator: "Bluesky Media / bsm.photos (printed floor-plan credit)",
+    creator: "Blu Skye Media / bsm.photos (printed floor-plan credit)",
     capturedAt: undefined,
     credit:
-      "Bluesky Media / bsm.photos; source floor plan retained by Openhouse-3D.",
+      "Blu Skye Media / bsm.photos; source floor plan retained by Openhouse-3D.",
     sourceWidth: 835,
     sourceHeight: 1080,
     sourceSha256:
@@ -220,13 +220,15 @@ export const websterDataset = {
   ],
   dimensions: {
     units: "metres",
-    mainFloorWidthApprox: 11.5,
-    mainFloorDepthApprox: 18.2,
+    mainFloorWidthApprox: 10.093,
+    mainFloorDepthApprox: 17.611,
+    mainFloorPixelBounds: { left: 95, right: 393, top: 418, bottom: 938 },
+    metresPerPixelApprox: 0.0338666667,
     mainFloorCeilingApprox: 2.75,
     upperFloorHeightApprox: 3.05,
     source:
-      "https://github.com/yunfanye/openhouse-3d/blob/b6e5d9b40b9f1d2c12775d8fd5e6a370897cb907/houses/webster/plan.py",
-    note: "Reconstruction coordinates from source plan.py; concealed geometry and unmeasured dimensions are inferred.",
+      "https://github.com/yunfanye/openhouse-3d/blob/b6e5d9b40b9f1d2c12775d8fd5e6a370897cb907/houses/webster/photos/31.jpg",
+    note: "Main-floor outline and door topology traced directly from floor-plan image 31.jpg. Uniform display scale approximates 14 feet across 126 pixels; resulting 10.093 × 17.611 metre bounds are rendering estimates, not surveyed dimensions. Source drawing labels are approximate and not mutually consistent with image proportions. Ceiling and upper-floor heights remain illustrative reconstruction estimates.",
   },
   roomPhotoCoverage: {
     living: true,
@@ -242,4 +244,7 @@ export const websterDataset = {
     bathroom: "Photo 13 maps to main-floor bathroom bath_a.",
     hallway: "Photo 15 maps to entry and staircase.",
   },
-} satisfies { photos: (DatasetPhoto & { originalSourceUrl: string })[]; [key: string]: unknown };
+} satisfies {
+  photos: (DatasetPhoto & { originalSourceUrl: string })[];
+  [key: string]: unknown;
+};

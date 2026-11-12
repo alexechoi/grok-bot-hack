@@ -27,7 +27,7 @@ Open [localhost:3000](http://localhost:3000), leave **Demo** selected and click 
 - Open the completed report to review priorities, work orders and scoring, then download HTML or JSON. The HTML report can also be printed from a browser.
 - Use **Run inspection again** to repeat the scenario. Demo playback supports 1×, 2× and 4× speed.
 
-The five-room twin, furniture and characters are original procedural geometry. The illustrative apartment is not a captured real address. All walkthrough notes, electricity readings, occupancy assumptions and EPC information are explicitly synthetic.
+The default example is Webster House from the user-selected Openhouse-3D dataset: one matching floor plan, five room-reference photographs and procedural reconstruction geometry. The source plan includes inferred dimensions, and the furniture is illustrative. Photograph rights remain with the original owners; the pinned photos are remote hackathon references. Incident notes, electricity readings and occupancy assumptions are synthetic. No EPC rating or actual property defect is asserted. Farnsworth and a synthetic apartment remain separate fallback datasets.
 
 ## Demo and Live are different execution modes
 
@@ -36,7 +36,7 @@ The five-room twin, furniture and characters are original procedural geometry. T
 | **Demo** | A deterministic backend scenario with validated structured findings. SSE events drive the scene. No live model execution and no invented Grok Bot conversations. |
 | **Live Grok Bot** | The Node backend sends real tasks to actual Grok Bot teammates through the unofficial desktop-protocol SDK, validates their replies and streams the resulting workflow events. Errors remain visible; Live never silently falls back to Demo. |
 
-A complete backend Live inspection was verified on **12 November 2026 at 19:37:04 UTC**: four actual Grok Bot teammates produced **3 sourced findings, 3 work orders and a sourced action plan**, with **68 timestamped events** and a deterministic score of **76/100** from the live severities. Five actual validated replies cover manager assignment, parallel inspection/energy review, maintenance assessment and the final manager report. The UI distinguishes bot transport activity from backend output-adapter tool calls.
+A complete **Webster House Live inspection** was verified on **12 November 2026, 20:28:39–20:30:35 UTC**. Four actual Grok Bot teammates produced **3 source-verified photo observations, 3 simulated incident findings, 3 work orders and a sourced action plan**, with **85 timestamped events** and a scenario score of **76/100**. Eight validated replies cover assignment, bathroom/kitchen/entry image review, synthetic inspection/energy analysis, maintenance and reporting. The backend verifies each image’s digest and dimensions against the pinned source, without supplying the expected values in the photo task.
 
 The first SDK evidence round trip and a native desktop evidence test were also verified. SDK offline compatibility tests passed 48 checks. Authentication credentials and full Live receipts stay in ignored, permission-restricted `.caretakr/` files. A non-secret native response capture is in [docs/captures/scout-desktop.json](captures/scout-desktop.json).
 
@@ -55,7 +55,7 @@ npm run dev
 
 Finish the login in your own browser. The login command saves its session only to ignored `.caretakr/grok-credentials.json`; it does not extract the desktop app's Keychain credentials. `grok:check -- --round-trip` sends the supplied synthetic bathroom note to an owned Bot and accepts success only after a matching, schema-valid reply. `grok:provision` discovers the four native-created Caretakr Bots and stores their IDs in `.env.local`. Create them in the desktop app first: Caretakr · Scout Inspector, Caretakr · Watt, Caretakr · Fix, Caretakr · Cleo. This account’s SDK-created Bots used an incompatible BOX harness; discovery verifies the actual TEMPORAL harness before mapping a role.
 
-In Caretakr's connection panel, unlock operator access using the local **`CARETAKR_OPERATOR_TOKEN`** from `.env.local`, then choose Live. **Never enter a Grok Bot access token in the browser UI.** Operator access is exchanged for a signed HttpOnly cookie; Grok credentials remain on the server.
+Open the one-use **Live workspace link** printed by `npm run dev`, then choose Live. Run `npm run unlock:live` for a fresh link if needed. Each link expires after five minutes, sets a signed HttpOnly operator cookie and redirects to a clean URL. No token needs to be copied into the interface, and Grok Bot credentials remain on the server.
 
 The roles are:
 
@@ -82,7 +82,7 @@ The automatic workflow also accepts schema-validated SDK JSON replies. Events di
 
 ## Evidence and calculations
 
-Demo covers suspected bathroom moisture, unusual overnight kitchen consumption and a potentially obstructed hallway escape route. Every finding cites its input evidence IDs. Recommendations identify missing measurements and unconfirmed causes.
+Demo covers suspected bathroom moisture, unusual overnight kitchen consumption and a potentially obstructed hallway escape route. Every simulated finding cites its incident or meter input. Genuine reference photos have separate observation records, source credits and byte-verification metadata; photos alone cannot substantiate the simulated defects. Recommendations identify missing measurements and unconfirmed causes.
 
 Consumption deviation is calculated in code: baseline **1.2 kWh**, observed **4.8 kWh**, excess **3.6 kWh**, or **300% above baseline**. The score starts at 100 and deducts 3 per low, 8 per medium, 15 per high and 30 per critical finding, floored at zero. Demo's two high and one medium findings produce **62/100**. This is an illustrative operational score, not a certified building or safety assessment.
 

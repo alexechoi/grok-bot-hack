@@ -1,79 +1,83 @@
 "use client";
-/** Main-floor geometry adapted from OpenHouse3D / houses/webster/plan.py.
+/** Main-floor topology traced from OpenHouse3D listing floorplan photo 31.
+ * Original procedural furnishing patterns adapted from houses/webster/plan.py.
  * MIT Copyright(c)2026 Yunfan Ye and contributors; licence retained in
  * public/THIRD_PARTY_LICENSES.md. Photo references are not bundled here.
  * Furnishings are illustrative staging; source photos show an empty house.
  */
-import {
-  createContext,
-  memo,
-  useContext,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-} from "react";
+import { createContext, memo, useContext, useEffect, useMemo } from "react";
 import { type ThreeEvent } from "@react-three/fiber";
 import { RoundedBox } from "@react-three/drei";
 import {
   CanvasTexture,
   CatmullRomCurve3,
-  Color,
-  InstancedMesh,
-  Matrix4,
   RepeatWrapping,
   SRGBColorSpace,
   Vector3,
+  Shape,
+  ShapeGeometry,
 } from "three";
 import plan from "./webster-plan.json";
+import {
+  tracePoint,
+  traceRooms,
+  traceWalls,
+  traceOpenings,
+  type TraceWall,
+  type TraceOpening,
+  type Pixel,
+} from "./webster-trace";
 import type { PropertyZoneMap } from "./farnsworth-house";
 type P = [number, number, number];
 export const websterZones: PropertyZoneMap = {
-  living: { name: "Living room", point: [-3.3, 0, 5.8] },
-  kitchen: { name: "Kitchen", point: [3.6, 0, -0.2] },
-  bedroom: { name: "Main-floor bedroom", point: [-3.3, 0, 1.1] },
-  bathroom: { name: "Main-floor bathroom", point: [-4.15, 0, -2.2] },
-  hallway: { name: "Entry & hall", point: [-0.7, 0, 6.4] },
+  living: { name: "Living room", point: tracePoint(165, 840) },
+  kitchen: { name: "Kitchen", point: tracePoint(306, 690) },
+  bedroom: { name: "Main-floor bedroom", point: tracePoint(182, 688) },
+  bathroom: { name: "Main-floor bathroom", point: tracePoint(183, 604) },
+  hallway: { name: "Entry & circulation", point: tracePoint(244, 850) },
 };
-export const websterOffice: P = [1.8, 0, 5.2];
+export const websterOffice: P = tracePoint(296, 820);
 export const websterOverview = {
-  width: 14.7,
-  depth: 22,
-  centre: [0.2, 0, -0.1] as P,
+  width: 12.1,
+  depth: 19.3,
+  centre: [0, 0, 0] as P,
 };
 export function websterRoute(from: string, to: string): P[] {
-  const entry: P = [-0.7, 0, 6],
-    hall: P = [-0.75, 0, -2.95],
-    dining: P = [2.8, 0, 5.8];
+  const entry = tracePoint(244, 850),
+    dining = tracePoint(332, 820),
+    kd = tracePoint(308, 748),
+    aisle = tracePoint(308, 690),
+    spine = tracePoint(280, 620);
   const exits: Record<string, P[]> = {
-    living: [[-1.35, 0, 6], entry],
+    living: [tracePoint(221, 850), entry],
     hallway: [entry],
-    bedroom: [[-1.45, 0, -0.1], [-0.75, 0, -0.1], entry],
-    bathroom: [
-      [-3, 0, -1.95],
-      [-2.1, 0, -1.95],
-      [-2.1, 0, -2.95],
-      [-1.35, 0, -2.95],
-      hall,
+    kitchen: [aisle, kd, dining, tracePoint(279, 850), entry],
+    bedroom: [
+      tracePoint(221, 644),
+      tracePoint(236, 644),
+      tracePoint(236, 615),
+      spine,
+      aisle,
+      kd,
+      dining,
+      tracePoint(279, 850),
       entry,
     ],
-    kitchen: [[2.8, 0, 2.05], dining, entry],
-  };
-  const enters: Record<string, P[]> = {
-    living: [entry, [-1.35, 0, 6]],
-    hallway: [entry],
-    bedroom: [entry, [-0.75, 0, -0.1], [-1.45, 0, -0.1]],
     bathroom: [
+      tracePoint(221, 615),
+      tracePoint(236, 615),
+      spine,
+      aisle,
+      kd,
+      dining,
+      tracePoint(279, 850),
       entry,
-      hall,
-      [-1.35, 0, -2.95],
-      [-2.1, 0, -2.95],
-      [-2.1, 0, -1.95],
-      [-3, 0, -1.95],
     ],
-    kitchen: [entry, [1.12, 0, 6], dining, [2.8, 0, 2.05]],
   };
-  return [...(exits[from] ?? [entry]), ...(enters[to] ?? [entry])].filter(
+  return [
+    ...(exits[from] ?? [entry]),
+    ...(exits[to] ?? [entry]).slice().reverse(),
+  ].filter(
     (p, i, a) => i === 0 || p[0] !== a[i - 1][0] || p[2] !== a[i - 1][2],
   );
 }
@@ -105,8 +109,8 @@ function texture(kind: "wood" | "fabric") {
       const i = (y * 256 + x) * 4,
         n =
           kind === "wood"
-            ? Math.sin(x * 0.18 + Math.sin(y * 0.012) * 0.6) * 8 +
-              Math.sin(x * 1.7 + y * 0.003) * 3 +
+            ? Math.sin(x * 0.18 + Math.sin(y * 0.012) * 0.6) * 3 +
+              Math.sin(x * 1.7 + y * 0.003) * 1.5 +
               rand() * 4
             : rand() * 24;
       image.data[i] = 238 + n;
@@ -260,72 +264,8 @@ function Lamp({ p }: { p: P }) {
     </group>
   );
 }
-function Floor({
-  bounds,
-  carpet = false,
-  tile = false,
-}: {
-  bounds: number[];
-  carpet?: boolean;
-  tile?: boolean;
-}) {
-  const [x0, x1, y0, y1] = bounds,
-    w = x1 - x0,
-    d = y1 - y0,
-    cols = tile ? Math.ceil(w / 0.48) : Math.ceil(w / 0.22),
-    rows = tile ? Math.ceil(d / 0.48) : Math.ceil(d / 1.4),
-    mesh = useRef<InstancedMesh>(null),
-    mats = useContext(Materials);
-  useLayoutEffect(() => {
-    if (!mesh.current) return;
-    const m = new Matrix4(),
-      colors = (
-        tile
-          ? ["#d9c9a8", "#e0d1b4", "#d8c7a7"]
-          : ["#c89f6e", "#d1ad7d", "#c7a272", "#dbb98b"]
-      ).map((c) => new Color(c));
-    for (let z = 0; z < rows; z++)
-      for (let x = 0; x < cols; x++) {
-        m.makeScale(w / cols - (tile ? 0.014 : 0.008), 0.022, d / rows - 0.008);
-        m.setPosition(
-          x0 + ((x + 0.5) * w) / cols,
-          0.012,
-          9 - y0 - ((z + 0.5) * d) / rows,
-        );
-        const i = z * cols + x;
-        mesh.current.setMatrixAt(i, m);
-        mesh.current.setColorAt(i, colors[(x * 3 + z * 7) % colors.length]);
-      }
-    mesh.current.instanceMatrix.needsUpdate = true;
-    if (mesh.current.instanceColor)
-      mesh.current.instanceColor.needsUpdate = true;
-    mesh.current.computeBoundingSphere();
-  }, [w, d, x0, y0, cols, rows, tile]);
-  if (carpet)
-    return (
-      <S
-        p={[(x0 + x1) / 2, 0.018, 9 - (y0 + y1) / 2]}
-        s={[w, 0.035, d]}
-        c="#c3bcae"
-        radius={0.012}
-      />
-    );
-  return (
-    <instancedMesh
-      ref={mesh}
-      args={[undefined, undefined, cols * rows]}
-      receiveShadow
-    >
-      <boxGeometry />
-      <meshStandardMaterial
-        map={tile ? undefined : mats.wood}
-        roughness={tile ? 0.75 : 0.64}
-      />
-    </instancedMesh>
-  );
-}
-type Wall = (typeof plan.WALLS)[number];
-type Opening = (typeof plan.OPENINGS)[number];
+type Wall = TraceWall;
+type Opening = TraceOpening;
 function matching(w: Wall, o: Opening) {
   return (
     w.along === o.along &&
@@ -343,8 +283,8 @@ function wallHeight(w: Wall) {
   return 2.6;
 }
 function WallParts({ wall: w }: { wall: Wall }) {
-  const h = wallHeight(w),
-    holes = plan.OPENINGS.filter((o) => matching(w, o)),
+  const h = w.cutHeight ?? wallHeight(w),
+    holes = traceOpenings.filter((o) => matching(w, o)),
     cuts = [
       w.a0,
       w.a1,
@@ -401,19 +341,24 @@ function WallParts({ wall: w }: { wall: Wall }) {
             </group>
           );
         })}
-      <B
-        p={
-          w.along === "X"
-            ? [(w.a0 + w.a1) / 2, h + 0.02, 9 - (w.b0 + w.b1) / 2]
-            : [(w.b0 + w.b1) / 2, h + 0.02, 9 - (w.a0 + w.a1) / 2]
-        }
-        s={
-          w.along === "X"
-            ? [w.a1 - w.a0, 0.065, w.b1 - w.b0 + 0.045]
-            : [w.b1 - w.b0 + 0.045, 0.065, w.a1 - w.a0]
-        }
-        c={palettes.trim}
-      />
+      {segments
+        .filter((s) => s.hi === h)
+        .map((s, i) => (
+          <B
+            key={`cap${i}`}
+            p={
+              w.along === "X"
+                ? [(s.a + s.b) / 2, h + 0.02, 9 - (w.b0 + w.b1) / 2]
+                : [(w.b0 + w.b1) / 2, h + 0.02, 9 - (s.a + s.b) / 2]
+            }
+            s={
+              w.along === "X"
+                ? [s.b - s.a, 0.065, w.b1 - w.b0 + 0.045]
+                : [w.b1 - w.b0 + 0.045, 0.065, s.b - s.a]
+            }
+            c={palettes.trim}
+          />
+        ))}
     </group>
   );
 }
@@ -589,6 +534,14 @@ function StagedKitchen() {
 function StagedBath() {
   return (
     <group>
+      {Array.from({ length: 16 }, (_, i) => (
+        <B
+          key={`tile${i}`}
+          p={[-5.4 + (i % 8) * 0.31, 0.82 + Math.floor(i / 8) * 0.15, -3.29]}
+          s={[0.3, 0.145, 0.035]}
+          c={(i + Math.floor(i / 8)) % 2 === 0 ? "#b3c8ce" : "#d6b2a4"}
+        />
+      ))}
       <S
         p={[-4.65, 0.32, -1.58]}
         s={[1.65, 0.58, 0.75]}
@@ -672,6 +625,111 @@ function Dining() {
     </group>
   );
 }
+function TracedFloor({
+  polygon,
+  surface,
+}: {
+  polygon: Pixel[];
+  surface: "wood" | "carpet" | "tile";
+}) {
+  const mats = useContext(Materials);
+  const geometry = useMemo(() => {
+    const shape = new Shape();
+    polygon.forEach(([x, y], i) => {
+      const p = tracePoint(x, y);
+      if (i === 0) shape.moveTo(p[0], -p[2]);
+      else shape.lineTo(p[0], -p[2]);
+    });
+    shape.closePath();
+    return new ShapeGeometry(shape);
+  }, [polygon]);
+  useEffect(() => () => geometry.dispose(), [geometry]);
+  return (
+    <mesh
+      geometry={geometry}
+      rotation={[-Math.PI / 2, 0, 0]}
+      position={[0, 0.025, 0]}
+      receiveShadow
+    >
+      <meshStandardMaterial
+        side={2}
+        color={
+          surface === "carpet"
+            ? "#b7b4af"
+            : surface === "tile"
+              ? "#c9c0ae"
+              : "#c9b79b"
+        }
+        map={surface === "wood" ? mats.wood : mats.fabric}
+        roughness={0.85}
+      />
+    </mesh>
+  );
+}
+function MappedRoom({
+  id,
+  children,
+}: {
+  id: string;
+  children: React.ReactNode;
+}) {
+  const old = plan.ROOMS[id as keyof typeof plan.ROOMS],
+    target = traceRooms[id].bounds;
+  const min = tracePoint(target[0], target[2]),
+    max = tracePoint(target[1], target[3]);
+  const sx = (max[0] - min[0]) / (old[1] - old[0]),
+    sz = (max[2] - min[2]) / (old[3] - old[2]);
+  return (
+    <group
+      scale={[sx, 1, sz]}
+      position={[min[0] - old[0] * sx, 0, min[2] - (9 - old[3]) * sz]}
+    >
+      {children}
+    </group>
+  );
+}
+function CompactStairs() {
+  const first = tracePoint(261, 787),
+    second = tracePoint(237, 735),
+    landing = tracePoint(249.5, 756);
+  return (
+    <group>
+      {Array.from({ length: 7 }, (_, i) => (
+        <B
+          key={`a${i}`}
+          p={[first[0], 0.08 + i * 0.13, tracePoint(261, 805 - i * 5.5)[2]]}
+          s={[1.04, 0.15, 0.19]}
+          c="#bbb8b1"
+        />
+      ))}
+      <B
+        p={[landing[0], 0.94, landing[2]]}
+        s={[1.88, 0.14, 0.65]}
+        c="#bbb8b1"
+      />
+      {Array.from({ length: 5 }, (_, i) => (
+        <B
+          key={`b${i}`}
+          p={[second[0], 1.05 + i * 0.15, tracePoint(237, 744 - i * 4)[2]]}
+          s={[1.05, 0.15, 0.145]}
+          c="#bbb8b1"
+        />
+      ))}
+      {Array.from({ length: 8 }, (_, i) => (
+        <B
+          key={`rail${i}`}
+          p={[
+            tracePoint(278, 0)[0],
+            0.75 + i * 0.09,
+            tracePoint(0, 806 - i * 7)[2],
+          ]}
+          s={[0.025, 1.0, 0.025]}
+          c="#f3eee6"
+        />
+      ))}
+    </group>
+  );
+}
 function StaticWebster() {
   const mats = useMemo(
     () => ({ wood: texture("wood"), fabric: texture("fabric") }),
@@ -687,50 +745,57 @@ function StaticWebster() {
   return (
     <Materials.Provider value={mats}>
       <group>
-        <S p={[0, -0.34, 0]} s={[12.1, 0.65, 19.1]} c="#43505a" radius={0.15} />
-        {Object.entries(plan.ROOMS)
-          .filter(([id]) => !["alcove", "stair", "pantry", "half"].includes(id))
-          .map(([id, bounds]) => (
-            <Floor
-              key={id}
-              bounds={bounds}
-              carpet={id === "living"}
-              tile={["entry", "bath_a", "bath_a_v", "laundry"].includes(id)}
-            />
-          ))}
-        {plan.WALLS.map((wall, i) => (
+        <S p={[0, -0.34, 0]} s={[11.1, 0.65, 18.7]} c="#43505a" radius={0.15} />
+        {Object.entries(traceRooms).map(([id, r]) => (
+          <TracedFloor key={id} polygon={r.polygon} surface={r.surface} />
+        ))}
+        {traceWalls.map((wall, i) => (
           <WallParts key={i} wall={wall} />
         ))}
-        {plan.OPENINGS.filter(
-          (o) => !["door", "arch", "cased", "hole"].includes(o.kind),
-        ).map((o) => (
-          <Window key={o.name} o={o} />
-        ))}
-        {plan.OPENINGS.filter((o) =>
-          ["ArchLiv", "ArchDin", "ArchKit"].includes(o.name),
-        ).map((o) => (
-          <Arch key={o.name} o={o} />
-        ))}
-        {Array.from({ length: 8 }, (_, i) => (
-          <B
-            key={i}
-            p={[0.37, 0.09 + i * 0.18, 3.85 - i * 0.26]}
-            s={[1.0, 0.18, 0.265]}
-            c="#b6b2a5"
-          />
-        ))}
-        <StagedLiving />
-        <StagedKitchen />
-        <StagedBath />
-        <StagedBed p={[-4.6, 0, 1.1]} />
-        <StagedBed p={[-3.0, 0, -5.75]} r={-Math.PI / 2} />
-        <Dining />
-        <S p={[1.5, 0.38, -7.2]} s={[2.4, 0.5, 0.95]} c="#9caeb6" />
-        <S p={[1.5, 0.81, -7.55]} s={[2.4, 0.75, 0.18]} c="#a9b8be" />
-        <C p={[1.4, 0.46, -5.8]} rad={0.6} h={0.1} c={palettes.oak} />
-        <Plant p={[2.65, 0, -8.1]} scale={1.15} />
-        <B p={[4.5, 0.55, -3.8]} s={[1.5, 1.05, 0.62]} c="#eee8dc" />
-        <Books p={[3.9, 1.12, -3.8]} />
+        {traceOpenings
+          .filter((o) => o.kind === "window")
+          .map((o) => (
+            <Window key={o.name} o={o} />
+          ))}
+        {traceOpenings
+          .filter((o) => o.kind === "arch")
+          .map((o) => (
+            <Arch key={o.name} o={o} />
+          ))}
+        <group position={tracePoint(120, 760)}>
+          <S p={[0, 0.22, 0.15]} s={[0.44, 0.38, 0.6]} c="#eeeae3" />
+          <S p={[0, 0.45, -0.08]} s={[0.47, 0.55, 0.19]} c="#eeeae3" />
+          <S p={[0, 0.43, 0.2]} s={[0.46, 0.08, 0.48]} c="#d9d8d1" />
+        </group>
+        <CompactStairs />
+        <MappedRoom id="living">
+          <StagedLiving />
+        </MappedRoom>
+        <MappedRoom id="kitchen">
+          <StagedKitchen />
+        </MappedRoom>
+        <MappedRoom id="bath_a">
+          <StagedBath />
+        </MappedRoom>
+        <MappedRoom id="bed_a">
+          <StagedBed p={[-4.6, 0, 1.1]} />
+        </MappedRoom>
+        <MappedRoom id="bed_b">
+          <StagedBed p={[-3, 0, -5.75]} r={-Math.PI / 2} />
+        </MappedRoom>
+        <MappedRoom id="dining">
+          <Dining />
+        </MappedRoom>
+        <MappedRoom id="family">
+          <S p={[1.5, 0.38, -7.2]} s={[2.4, 0.5, 0.95]} c="#9caeb6" />
+          <S p={[1.5, 0.81, -7.55]} s={[2.4, 0.75, 0.18]} c="#a9b8be" />
+          <C p={[1.4, 0.46, -5.8]} rad={0.6} h={0.1} c={palettes.oak} />
+          <Plant p={[2.65, 0, -8.1]} scale={1.15} />
+        </MappedRoom>
+        <MappedRoom id="laundry">
+          <B p={[4.5, 0.55, -3.8]} s={[1.5, 1.05, 0.62]} c="#eee8dc" />
+          <Books p={[3.9, 1.12, -3.8]} />
+        </MappedRoom>
       </group>
     </Materials.Provider>
   );
@@ -756,15 +821,11 @@ export default function WebsterHouse({
         >
           <planeGeometry
             args={
-              id === "living"
-                ? [3.9, 4.9]
-                : id === "kitchen"
-                  ? [3.9, 3.9]
-                  : id === "bedroom"
-                    ? [3.9, 3.8]
-                    : id === "bathroom"
-                      ? [2.4, 2.1]
-                      : [2.1, 4.4]
+              id === "bathroom"
+                ? [2.5, 1.9]
+                : id === "hallway"
+                  ? [1.8, 2]
+                  : [3.6, 3.6]
             }
           />
           <meshBasicMaterial transparent opacity={0} depthWrite={false} />

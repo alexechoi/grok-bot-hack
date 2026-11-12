@@ -1,0 +1,9 @@
+/* Building level is a view control, separate from inspection state. */
+.level-switch { display: flex; gap: 18px; margin-top: 12px; pointer-events: auto; }
+.level-switch button { padding: 5px 0 7px; border: 0; border-bottom: 1px solid transparent; border-radius: 0; background: transparent; color: var(--muted); font: inherit; font-size: 12px; }
+.level-switch button[aria-pressed="true"] { color: var(--text); border-bottom-color: var(--accent); }
+.level-switch button:disabled { opacity: .4; cursor: default; }
+.level-switch button:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+@media (max-width: 600px) { .level-switch { gap: 16px; margin-top: 7px; } .level-switch button { min-height: 32px; } }
+
+@media (min-width: 769px) { .app-shell:has(.level-switch) .workforce { top: 164px; } }
