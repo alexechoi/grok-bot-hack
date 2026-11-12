@@ -1086,7 +1086,7 @@ export default function Home() {
                     <Radio size={22} />
                     <strong>Live Grok Bot</strong>
                     <p>
-                      Actual bot tasks, MCP tool calls and streamed results.
+                      Real Grok Bot tasks and streamed findings.
                     </p>
                     {s.mode === "live" && <Check size={16} />}
                   </button>
