@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="560" viewBox="0 0 1440 560" role="img" aria-labelledby="title desc">
+  <title id="title">Caretakr — small team, big care</title>
+  <desc id="desc">Four colour-coded specialists turn property evidence into findings, work orders and a report. An illustrated five-room floor plan shows their shared workspace.</desc>
+  <defs><pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#dedbd1" stroke-width="0.6"/></pattern></defs>
+  <rect width="1440" height="560" rx="24" fill="#f5f3ec"/>
+  <rect x="740" width="700" height="560" rx="24" fill="url(#grid)"/>
+  <g font-family="Arial, Helvetica, sans-serif">
+    <rect x="48" y="40" width="162" height="28" rx="14" fill="#e0e8d7"/>
+    <text x="66" y="59" fill="#456038" font-size="12" font-weight="700" letter-spacing="1">MEET CARETAKR</text>
+    <text x="48" y="148" fill="#263526" font-size="64" font-weight="700" letter-spacing="-2">Small team.</text>
+    <text x="48" y="218" fill="#263526" font-size="64" font-weight="700" letter-spacing="-2">Big care.</text>
+    <text x="50" y="264" fill="#66705e" font-size="22">Property evidence becomes a plan.</text>
+    <g transform="translate(48 308)">
+      <rect width="148" height="110" rx="16" fill="#e3eaf6"/>
+      <circle cx="24" cy="24" r="7" fill="#628bca"/>
+      <text x="18" y="62" font-size="24" font-weight="700" fill="#2d456b">Scout</text><text x="18" y="89" font-size="15" fill="#50627d">Inspect</text>
+      <rect x="160" width="148" height="110" rx="16" fill="#ece5f5"/>
+      <circle cx="184" cy="24" r="7" fill="#9671b5"/>
+      <text x="178" y="62" font-size="24" font-weight="700" fill="#62447b">Watt</text><text x="178" y="89" font-size="15" fill="#78618b">Analyse</text>
+      <rect x="320" width="148" height="110" rx="16" fill="#f5e4d2"/>
+      <circle cx="344" cy="24" r="7" fill="#ce8e51"/>
+      <text x="338" y="62" font-size="24" font-weight="700" fill="#7b522c">Fix</text><text x="338" y="89" font-size="15" fill="#896748">Plan actions</text>
+      <rect x="480" width="148" height="110" rx="16" fill="#e0eadb"/>
+      <circle cx="504" cy="24" r="7" fill="#759363"/>
+      <text x="498" y="62" font-size="24" font-weight="700" fill="#3f5c33">Cleo</text><text x="498" y="89" font-size="15" fill="#5c7451">Coordinate</text>
+    </g>
+    <path d="M50 454H674" stroke="#d8d9ce"/>
+    <text x="50" y="490" font-size="16" font-weight="700" fill="#34452e">Evidence → Findings → Work orders → Report</text>
+    <text x="50" y="530" font-size="12" fill="#77816e" letter-spacing="1">GROK BOT REAL ESTATE HACKATHON · PROPERTY MANAGEMENT</text>
+    <g transform="translate(802 60)">
+      <rect x="-12" y="-12" width="560" height="418" rx="18" fill="#fffdf8" stroke="#b9c2ac" stroke-width="3"/>
+      <path d="M0 0H232V192H0Z" fill="#e4ecf6"/><path d="M244 0H536V192H244Z" fill="#ede5f3"/>
+      <path d="M0 204H536V262H0Z" fill="#f2e6cf"/><path d="M0 274H232V394H0Z" fill="#e8e9df"/><path d="M244 274H536V394H244Z" fill="#e1ead9"/>
+      <g fill="#fdfcf8" stroke="#bec6b5" stroke-width="2">
+        <rect x="24" y="24" width="73" height="106" rx="18"/><rect x="112" y="25" width="42" height="40" rx="9"/>
+        <path d="M272 24H510V70H316V130H272Z"/><rect x="22" y="292" width="124" height="82" rx="7"/>
+        <rect x="33" y="302" width="37" height="24" rx="5"/><rect x="80" y="302" width="37" height="24" rx="5"/>
+        <rect x="411" y="296" width="99" height="73" rx="9"/><rect x="300" y="318" width="65" height="45" rx="18"/>
+      </g>
+      <path d="M174 108V233H387V127M387 233V330" fill="none" stroke="#99a68e" stroke-width="2" stroke-dasharray="5 7"/>
+      <g font-size="11" font-weight="700" letter-spacing="1.4" fill="#78816f"><text x="24" y="173">BATHROOM</text><text x="271" y="173">KITCHEN</text><text x="24" y="238">HALLWAY</text><text x="162" y="377">BEDROOM</text><text x="266" y="377">LIVING</text></g>
+      <g stroke="#fffdf8" stroke-width="4"><circle cx="174" cy="108" r="24" fill="#628bca"/><circle cx="387" cy="127" r="24" fill="#9671b5"/><circle cx="272" cy="233" r="24" fill="#ce8e51"/><circle cx="387" cy="330" r="24" fill="#759363"/></g>
+      <g fill="white" font-size="18" font-weight="700" text-anchor="middle"><text x="174" y="114">S</text><text x="387" y="133">W</text><text x="272" y="239">F</text><text x="387" y="336">C</text></g>
+    </g>
+    <text x="1070" y="500" text-anchor="middle" font-size="18" font-weight="700" fill="#34452e">4 specialists · 5 rooms · 1 shared mission</text>
+    <text x="1070" y="530" text-anchor="middle" font-size="11" fill="#77816e" letter-spacing="1">ILLUSTRATED WORKFLOW · SYNTHETIC EVIDENCE</text>
+  </g>
+</svg>

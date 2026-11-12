@@ -1,0 +1,23 @@
+{
+  "product": "Grok Bot",
+  "transport": "Native desktop app",
+  "botName": "Caretakr · Scout Inspector",
+  "responseDisplayedAt": "2026-11-12T19:24:20Z",
+  "captureMethod": "Observed in the signed-in native app accessibility tree during development; transcribed JSON response",
+  "sdkRoundTrip": false,
+  "inputEvidenceIds": ["EV-001"],
+  "syntheticInputs": true,
+  "result": {
+    "id": "F-001",
+    "roomId": "bathroom",
+    "category": "water",
+    "title": "Suspected water ingress at ceiling above shower",
+    "description": "A brown water stain about 30 cm across is visible at the ceiling junction above the shower, and the paint there is bubbling. This points to possible past or intermittent moisture ingress, perhaps from failed sealant, condensation, or a leak from plumbing or a room above. No active dripping was seen, and no moisture readings or source investigation have been done yet, so neither an active leak nor its cause is confirmed.",
+    "severity": "medium",
+    "confidence": null,
+    "evidenceIds": ["EV-001"],
+    "recommendedAction": "Take moisture meter readings at and around the stain, and check the shower seals, grout and any plumbing or room above to find the source. Monitor whether the stain grows after the shower is used. If readings are elevated or the stain spreads, refer to a plumber or a damp specialist. Do not redecorate until the source is identified and fixed.",
+    "agentId": "inspector",
+    "status": "new"
+  }
+}
