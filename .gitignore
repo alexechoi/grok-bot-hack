@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local Netlify folder
+.netlify
+
+# Caretakr local credentials and signed session secret
+/.caretakr/
+!.env.example

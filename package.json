@@ -6,21 +6,35 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "grok:login": "node scripts/grok-login.mjs",
+    "grok:setup": "node scripts/grok-setup.mjs",
+    "grok:provision": "node scripts/grok-provision.mjs",
+    "grok:check": "node scripts/grok-check.mjs"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "@react-three/drei": "^10.7.9",
+    "@react-three/fiber": "^9.8.2",
+    "grok-bot-sdk": "github:RongleCat/grok-bot-sdk#42c75eb13f24630d1b689629502d4320c4219cdb",
+    "lucide-react": "^1.72.0",
     "next": "16.4.6",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "three": "^0.187.0",
+    "zod": "^4.6.7",
+    "zustand": "^5.1.0"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "4.3.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/three": "^0.187.0",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
     "tailwindcss": "4.3.3",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }
