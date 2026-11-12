@@ -2,7 +2,7 @@
 
 # Caretakr
 
-### A team of Grok Bots tha conduct property inspections
+### A team of Grok Bots that conduct property inspections
 
 Upload a floor plan, property photos and it will be turned into a virtual apartment which Grok Bots walk around and inspect.
 
