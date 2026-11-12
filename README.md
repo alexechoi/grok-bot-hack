@@ -2,9 +2,9 @@
 
 # Caretakr
 
-### A tiny AI team. A whole apartment to care for.
+### A team of Grok Bots tha conduct property inspections
 
-Turn property evidence into prioritised maintenance actions—then watch the team work inside an interactive 3D apartment.
+Upload a floor plan, property photos and it will be turned into a virtual apartment which Grok Bots walk around and inspect.
 
 **Grok Bot Real Estate Hackathon London · Track 4: Asset and property management**
 
@@ -20,7 +20,7 @@ Walkthrough notes, meter readings and maintenance decisions belong in one connec
 
 | 🏠 See the work | 🔎 Follow the evidence | 🛠 Leave with a plan |
 | :--- | :--- | :--- |
-| Orbit a five-room 3D twin. Follow agents, focus rooms and open finding markers. | Inspect source evidence, timestamped activity and specialist handoffs. | Review priorities, work orders and a health score. Export HTML or JSON. |
+| Orbit a floor-plan-derived 3D twin. Follow agents, focus rooms and open finding markers. | Inspect source evidence, timestamped activity and specialist handoffs. | Review priorities, work orders and a health score. Export HTML or JSON. |
 
 ## Four specialists. One shared mission.
 
@@ -63,13 +63,13 @@ Open [localhost:3000](http://localhost:3000), keep **Demo** selected and click *
 | Suspected ceiling moisture | **4.8 kWh** vs **1.2 kWh** baseline | Potentially obstructed escape route |
 | Investigate the source | **300% above baseline** | Clear and measure access |
 
-*Demo uses synthetic evidence: 3 findings → 3 work orders → an illustrative 62/100 score. The original procedural apartment represents evidence review, not physical robotic inspection or a certified safety assessment.*
+*Demo uses synthetic incident notes: 3 findings → 3 work orders → an illustrative 62/100 score. The default Webster House example uses its matching source floor plan and room photographs for context. The photographs do not show the simulated incidents; their original rights remain with their owners.*
 
 ## Real Grok Bot teammates. Visible handoffs.
 
 **Demo** runs a deterministic backend scenario. **Live** dispatches real tasks to Grok Bot teammates through a pinned, unofficial SDK, validates their replies and streams workflow events into the scene. Live errors stay visible.
 
-The [verified Live run](docs/grok-integration.md#verified-full-four-bot-inspection) completed with **4 Bots · 3 sourced findings · 3 work orders · 68 timestamped events**. Its score was **76/100**, calculated from the live findings; Live outputs can differ from Demo.
+The [verified Webster Live run](docs/grok-integration.md#verified-full-four-bot-inspection) completed in under two minutes: **4 Bots · 3 source-verified photo reviews · 3 simulated incident findings · 3 work orders · 85 events**. Each reviewed image passed an independent SHA-256 and dimension check. The scenario score was **76/100**; Live classifications can differ from Demo.
 
 **Custom MCP tools** let connected Bots read evidence, publish findings, create work orders and complete inspections. SDK replies and actual MCP calls are distinguished in the event stream. [Connect your Bots →](docs/grok-integration.md)
 
